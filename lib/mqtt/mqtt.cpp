@@ -87,7 +87,7 @@ void initMQTT() {
   timer = millis();
 }
 
-void publishData(char *label, int value) {
+void sendData(char *label, float value) {
   // Check if the type is valid, and if the index is in range
   MQTT_STATUS = SENDING_DATA;
   // Add the value to the Ubidots client
