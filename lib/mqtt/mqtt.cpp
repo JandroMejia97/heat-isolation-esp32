@@ -19,6 +19,14 @@
   #error "UBIDOTS_TOKEN not defined. Please define it before importing Ubidots library"
 #endif
 
+#ifndef PUBLISH_FREQUENCY
+  #warning "PUBLISH_FREQUENCY not defined. Using default value"
+  #define DEAFULT_PUBLISH_FREQUENCY 60000
+  static const int PUBLISH_FREQUENCY = DEAFULT_PUBLISH_FREQUENCY;
+#else
+  static const int PUBLISH_FREQUENCY = PUBLISH_FREQUENCY;
+#endif
+
 // Set the DEVICE_LABEL
 #ifndef DEVICE_LABEL
   #warning "DEVICE_LABEL not defined. Using default value"
@@ -28,14 +36,14 @@
   const char *DEVICE_LABEL = DEVICE_LABEL;
 #endif
 
-MQTT_Status ESP_STATUS = ESP_INIT;
+MQTT_Status MQTT_STATUS = MQTT_INIT;
 
 void setStatus(MQTT_Status status) {
-  ESP_STATUS = status;
+  MQTT_STATUS = status;
 }
 
 MQTT_Status getStatus() {
-  return ESP_STATUS;
+  return MQTT_STATUS;
 }
 
 /**
@@ -50,7 +58,7 @@ bool clientIsConnected() {
 }
 
 void clientReconnect() {
-  setStatus(ESP_DISCONNECTED);
+  setStatus(MQTT_DISCONNECTED);
   client.reconnect();
 }
 
@@ -76,13 +84,13 @@ void initMQTT() {
   client.setCallback(callback);
   client.setup();
   client.reconnect();
-  setStatus(ESP_CONNECTED);
+  setStatus(MQTT_CONNECTED);
   timer = millis();
 }
 
 void publishData(char *label, int value) {
   // Check if the type is valid, and if the index is in range
-  ESP_STATUS = ESP_SENDING_DATA;
+  MQTT_STATUS = MQTT_SENDING_DATA;
   // Add the value to the Ubidots client
   client.add(label, value);
 
@@ -94,7 +102,7 @@ void publishData(char *label, int value) {
     client.publish(DEVICE_LABEL);
     timer = millis();
   }
-  setStatus(ESP_CONNECTED);
+  setStatus(MQTT_CONNECTED);
 }
 
 void callback(char *topic, byte *payload, unsigned int length) {
@@ -110,21 +118,21 @@ void callback(char *topic, byte *payload, unsigned int length) {
   Serial.println("-----------------------");
 }
 
-static String ESP_GetErrorAsString(MQTT_Status status) {
+static String MQTT_GetErrorAsString(MQTT_Status status) {
   switch (status) {
-    case ESP_INIT:
-      return "ESP_INIT";
-    case ESP_CONNECTED:
-      return "ESP_CONNECTED";
-    case ESP_DISCONNECTED:
-      return "ESP_DISCONNECTED";
-    case ESP_READING_DATA:
-      return "ESP_READING_DATA";
-    case ESP_SENDING_DATA:
-      return "ESP_SENDING_DATA";
-    case ESP_DATA_ERROR:
-      return "ESP_DATA_ERROR";
+    case MQTT_INIT:
+      return "MQTT_INIT";
+    case MQTT_CONNECTED:
+      return "MQTT_CONNECTED";
+    case MQTT_DISCONNECTED:
+      return "MQTT_DISCONNECTED";
+    case MQTT_READING_DATA:
+      return "MQTT_READING_DATA";
+    case MQTT_SENDING_DATA:
+      return "MQTT_SENDING_DATA";
+    case MQTT_DATA_ERROR:
+      return "MQTT_DATA_ERROR";
     default:
-      return "ESP_UNKNOWN_ERROR";
+      return "MQTT_UNKNOWN_ERROR";
   }
 }

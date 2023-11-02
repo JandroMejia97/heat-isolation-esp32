@@ -7,12 +7,12 @@
  * @brief ESP32 status
  */
 typedef enum {
-  ESP_INIT,
-  ESP_CONNECTED,
-  ESP_DISCONNECTED,
-  ESP_READING_DATA,
-  ESP_SENDING_DATA,
-  ESP_DATA_ERROR,
+  MQTT_INIT,
+  MQTT_CONNECTED,
+  MQTT_DISCONNECTED,
+  MQTT_READING_DATA,
+  MQTT_SENDING_DATA,
+  MQTT_DATA_ERROR,
 } MQTT_Status;
 
 /**
@@ -60,7 +60,7 @@ void sendData(char *label, float value);
  * @param status - Status of the ESP32
  * @return String - Status of the ESP32 as a string
  */
-static String ESP_GetErrorAsString(MQTT_Status status);
+static String MQTT_GetErrorAsString(MQTT_Status status);
 
 /**
  * @brief Function to initialize the Ubidots client
