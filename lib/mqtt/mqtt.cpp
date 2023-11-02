@@ -36,13 +36,13 @@
   const char *DEVICE_LABEL = DEVICE_LABEL;
 #endif
 
-MQTT_Status MQTT_STATUS = MQTT_INIT;
+MQTT_Status_t MQTT_STATUS = INIT;
 
-void setStatus(MQTT_Status status) {
+void setStatus(MQTT_Status_t status) {
   MQTT_STATUS = status;
 }
 
-MQTT_Status getStatus() {
+MQTT_Status_t getStatus() {
   return MQTT_STATUS;
 }
 
@@ -51,14 +51,13 @@ MQTT_Status getStatus() {
  */
 static Ubidots client(UBIDOTS_TOKEN);
 static unsigned long timer;
-static const int PUBLISH_FREQUENCY = 15000;
 
 bool clientIsConnected() {
   return client.connected();
 }
 
 void clientReconnect() {
-  setStatus(MQTT_DISCONNECTED);
+  setStatus(DISCONNECTED);
   client.reconnect();
 }
 
@@ -84,13 +83,13 @@ void initMQTT() {
   client.setCallback(callback);
   client.setup();
   client.reconnect();
-  setStatus(MQTT_CONNECTED);
+  setStatus(CONNECTED);
   timer = millis();
 }
 
 void publishData(char *label, int value) {
   // Check if the type is valid, and if the index is in range
-  MQTT_STATUS = MQTT_SENDING_DATA;
+  MQTT_STATUS = SENDING_DATA;
   // Add the value to the Ubidots client
   client.add(label, value);
 
@@ -102,7 +101,7 @@ void publishData(char *label, int value) {
     client.publish(DEVICE_LABEL);
     timer = millis();
   }
-  setStatus(MQTT_CONNECTED);
+  setStatus(CONNECTED);
 }
 
 void callback(char *topic, byte *payload, unsigned int length) {
@@ -118,19 +117,19 @@ void callback(char *topic, byte *payload, unsigned int length) {
   Serial.println("-----------------------");
 }
 
-static String MQTT_GetErrorAsString(MQTT_Status status) {
+static String MQTT_GetErrorAsString(MQTT_Status_t status) {
   switch (status) {
-    case MQTT_INIT:
+    case INIT:
       return "MQTT_INIT";
-    case MQTT_CONNECTED:
+    case CONNECTED:
       return "MQTT_CONNECTED";
-    case MQTT_DISCONNECTED:
+    case DISCONNECTED:
       return "MQTT_DISCONNECTED";
-    case MQTT_READING_DATA:
+    case READING_DATA:
       return "MQTT_READING_DATA";
-    case MQTT_SENDING_DATA:
+    case SENDING_DATA:
       return "MQTT_SENDING_DATA";
-    case MQTT_DATA_ERROR:
+    case DATA_ERROR:
       return "MQTT_DATA_ERROR";
     default:
       return "MQTT_UNKNOWN_ERROR";

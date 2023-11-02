@@ -1,8 +1,7 @@
 #include "tasks.h"
 
 /** Data to send through MQTT */
-struct DataToSend
-{
+struct DataToSend {
     char *label;
     float value;
 };
@@ -36,21 +35,25 @@ void initialSetup() {
 
 void setupTasks() {
     // Create task to read temperature from DHT sensor
+    DHTReturn internalDhtReturn = getInternalDHT();
+    DHTReturn roomDhtReturn = getRoomDHT();
     xTaskCreate(
         readDhtTask,
         "readInternalDht",
         2048,
-        &getInternalDHT(),
-        1,
-        &internalDhtTaskHandle);
+        &internalDhtReturn,
+        0,
+        &internalDhtTaskHandle
+    );
 
     xTaskCreate(
         readDhtTask,
         "readroomDht",
         2048,
-        &getRoomDHT(),
-        1,
-        &roomDhtTaskHandle);
+        &roomDhtReturn,
+        0,
+        &roomDhtTaskHandle
+    );
 
     // Create task to read infrared sensor
     xTaskCreate(
@@ -58,8 +61,9 @@ void setupTasks() {
         "readInfrared",
         2048,
         NULL,
-        1,
-        &infraredTaskHandle);
+        0,
+        &infraredTaskHandle
+    );
 
     // Create task to send data through MQTT
     xTaskCreate(
@@ -67,8 +71,9 @@ void setupTasks() {
         "sendData",
         2048,
         NULL,
-        1,
-        &sendDataTaskHandle);
+        3,
+        &sendDataTaskHandle
+    );
 
     // Create task to compare data
     /* xTaskCreate(
@@ -86,8 +91,9 @@ void setupTasks() {
         "checkConnection",
         2048,
         NULL,
-        1,
-        &checkConnectionTaskHandle);
+        3,
+        &checkConnectionTaskHandle
+    );
 }
 
 void readDhtTask(void *pvParameters) {
@@ -170,7 +176,7 @@ void checkConnectionTask(void *pvParameters) {
         } else {
             tasksEnabled = true;
             Serial.println("WiFi connected");
-            setStatus(MQTT_CONNECTED);
+            setStatus(CONNECTED);
         }
         vTaskDelay(pdMS_TO_TICKS(10000));
     }

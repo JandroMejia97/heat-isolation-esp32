@@ -7,25 +7,25 @@
  * @brief ESP32 status
  */
 typedef enum {
-  MQTT_INIT,
-  MQTT_CONNECTED,
-  MQTT_DISCONNECTED,
-  MQTT_READING_DATA,
-  MQTT_SENDING_DATA,
-  MQTT_DATA_ERROR,
-} MQTT_Status;
+  INIT,
+  CONNECTED,
+  DISCONNECTED,
+  READING_DATA,
+  SENDING_DATA,
+  DATA_ERROR,
+} MQTT_Status_t;
 
 /**
  * @brief Status of the MQTT client
  */
-void setStatus(MQTT_Status status);
+void setStatus(MQTT_Status_t status);
 
 /**
  * @brief Function to get the status of the MQTT client
  * 
- * @return MQTT_Status - Status of the MQTT client
+ * @return MQTT_Status_t - Status of the MQTT client
  */
-MQTT_Status getStatus();
+MQTT_Status_t getStatus();
 
 /**
  * @brief Function to check if the ESP32 is connected to the Ubidots MQTT broker
@@ -60,7 +60,7 @@ void sendData(char *label, float value);
  * @param status - Status of the ESP32
  * @return String - Status of the ESP32 as a string
  */
-static String MQTT_GetErrorAsString(MQTT_Status status);
+static String MQTT_GetErrorAsString(MQTT_Status_t status);
 
 /**
  * @brief Function to initialize the Ubidots client
