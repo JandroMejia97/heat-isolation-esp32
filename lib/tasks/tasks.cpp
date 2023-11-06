@@ -20,31 +20,35 @@ TaskHandle_t sendDataTaskHandle = NULL;
 TaskHandle_t compareDataTaskHandle = NULL;
 TaskHandle_t checkConnectionTaskHandle = NULL;
 
+// Statically allocate and initialize the spinlock
+static portMUX_TYPE dhtSpinLock = portMUX_INITIALIZER_UNLOCKED;
+static portMUX_TYPE infraredSpinLock = portMUX_INITIALIZER_UNLOCKED;
+static portMUX_TYPE checkConnectionSpinLock = portMUX_INITIALIZER_UNLOCKED;
+
 /** Queue for sending data through MQTT */
 QueueHandle_t dataQueue;
 
 void initialSetup() {
+    Serial.println("Initial setup");
     // Initialize sensors
     initInfrared();
     initDHTs();
-    initMQTT();
 
     // Create queue for sending data
-    dataQueue = xQueueCreate(30, sizeof(DataToSend));
+    dataQueue = xQueueCreate(40, sizeof(DataToSend));
+
+    if (dataQueue == NULL) {
+        Serial.println("Failed to create data queue");
+    } else {
+        initMQTT();
+    }
 }
 
 void setupTasks() {
+    Serial.println("Setting up tasks");
     // Create task to read temperature from DHT sensor
     DHTReturn internalDhtReturn = getInternalDHT();
     DHTReturn roomDhtReturn = getRoomDHT();
-    xTaskCreate(
-        readDhtTask,
-        "readInternalDht",
-        2048,
-        &internalDhtReturn,
-        0,
-        &internalDhtTaskHandle
-    );
 
     xTaskCreate(
         readDhtTask,
@@ -53,6 +57,15 @@ void setupTasks() {
         &roomDhtReturn,
         0,
         &roomDhtTaskHandle
+    );
+
+    xTaskCreate(
+        readDhtTask,
+        "readInternalDht",
+        2048,
+        &internalDhtReturn,
+        0,
+        &internalDhtTaskHandle
     );
 
     // Create task to read infrared sensor
@@ -65,21 +78,11 @@ void setupTasks() {
         &infraredTaskHandle
     );
 
-    // Create task to send data through MQTT
-    xTaskCreate(
-        sendDataTask,
-        "sendData",
-        2048,
-        NULL,
-        3,
-        &sendDataTaskHandle
-    );
-
     // Create task to compare data
     /* xTaskCreate(
       compareDataTask,
       "compareData",
-      2048,
+      1024,
       NULL,
       1,
       &compareDataTaskHandle
@@ -91,9 +94,24 @@ void setupTasks() {
         "checkConnection",
         2048,
         NULL,
-        3,
+        1,
         &checkConnectionTaskHandle
     );
+
+    Serial.println("Tasks set up");
+
+     // Create task to send data through MQTT
+    xTaskCreate(
+        sendDataTask,
+        "sendData",
+        2048,
+        NULL,
+        1,
+        &sendDataTaskHandle
+    );
+
+    // Start tasks
+    vTaskStartScheduler();
 }
 
 void readDhtTask(void *pvParameters) {
@@ -107,21 +125,28 @@ void readDhtTask(void *pvParameters) {
 
     while (1) {
         if (tasksEnabled) {
+            Serial.printf("readDhtTask - %s\n", dhtReturn->tempLabel);
+            taskENTER_CRITICAL(&dhtSpinLock);
             float temperature = dht->readTemperature();
+            tempToSend.value = temperature;
             float humidity = dht->readHumidity();
+            humToSend.value = humidity;
+            taskEXIT_CRITICAL(&dhtSpinLock);
             if (isnan(temperature) || isnan(humidity)) {
                 Serial.println("Failed to read from DHT sensor!");
             } else {
                 const TickType_t xTicksToWait = pdMS_TO_TICKS(10000);
-                tempToSend.value = temperature;
                 Serial.printf("Temperature: %.2f\n", temperature);
-                xQueueSend(dataQueue, &tempToSend, xTicksToWait);
-                humToSend.value = humidity;
+                if (xQueueSend(dataQueue, &tempToSend, xTicksToWait) != pdPASS) {
+                    Serial.println("Failed to send temperature data to queue");
+                }
                 Serial.printf("Humidity: %.2f\n", humidity);
-                xQueueSend(dataQueue, &humToSend, xTicksToWait);
+                if (xQueueSend(dataQueue, &humToSend, xTicksToWait) != pdPASS) {
+                    Serial.println("Failed to send humidity data to queue");
+                }
             }
         }
-        vTaskDelay(pdMS_TO_TICKS(30000));
+        vTaskDelay(pdMS_TO_TICKS(15000));
     }
 }
 
@@ -131,61 +156,99 @@ void readInfraredTask(void *pvParameters) {
 
     DataToSend ambientDataToSend;
     ambientDataToSend.label = INFRARED_ROOM_LABEL;
-
     while (1) {
         if (tasksEnabled) {
+            Serial.printf("readInfraredTask - %s\n", objectDataToSend.label);
+            taskENTER_CRITICAL(&infraredSpinLock);
             InfraredData infraredData = readInfrared();
+            objectDataToSend.value = infraredData.objectTemp;
+            ambientDataToSend.value = infraredData.ambientTemp;
+            taskEXIT_CRITICAL(&infraredSpinLock);
             if (isnan(infraredData.objectTemp) || isnan(infraredData.ambientTemp)) {
                 Serial.println("Failed to read from infrared sensor!");
             } else {
-                objectDataToSend.value = infraredData.objectTemp;
-                ambientDataToSend.value = infraredData.ambientTemp;
                 Serial.printf("Object temperature: %.2f\n", infraredData.objectTemp);
-                Serial.printf("Ambient temperature: %.2f\n", infraredData.ambientTemp);
                 const TickType_t xTicksToWait = pdMS_TO_TICKS(10000);
-                xQueueSend(dataQueue, &objectDataToSend, xTicksToWait);
-                xQueueSend(dataQueue, &ambientDataToSend, xTicksToWait);
+                if (xQueueSend(dataQueue, &objectDataToSend, xTicksToWait) != pdTRUE) {
+                    Serial.println("Failed to send object temperature data to queue");
+                }
+                Serial.printf("Ambient temperature: %.2f\n", infraredData.ambientTemp);
+                if (xQueueSend(dataQueue, &ambientDataToSend, xTicksToWait) != pdTRUE) {
+                    Serial.println("Failed to send ambient temperature data to queue");
+                }
             }
         }
-        vTaskDelay(pdMS_TO_TICKS(30000));
+        vTaskDelay(pdMS_TO_TICKS(15000));
     }
 }
 
 void sendDataTask(void *pvParameters) {
+    // Set wait time (in ticks)
+    TickType_t xLastWakeTime;
+    const TickType_t xFrequency =  pdMS_TO_TICKS(15000);
     while (1) {
         if (tasksEnabled) {
+            // Get the actual execution tick
+            xLastWakeTime = xTaskGetTickCount();
+            Serial.println("sendDataTask - Trying to send data");
             DataToSend dataToSend;
-            const TickType_t xTicksToWait = pdMS_TO_TICKS(15000);
-            if (xQueueReceive(dataQueue, &dataToSend, xTicksToWait) == pdPASS) {
-                Serial.printf("Sending data: %s: %.2f\n", dataToSend.label, dataToSend.value);
+            if (xQueueReceive(dataQueue, &dataToSend, 0)) {
+                Serial.printf("sendDataTask - %s: %.2f\n", dataToSend.label, dataToSend.value);
                 sendData(dataToSend.label, dataToSend.value);
             } else {
-                Serial.println("Queue is empty");
+                Serial.println("sendDataTask - No data to send");
             }
+            vTaskDelayUntil(&xLastWakeTime, xFrequency);
+        } else {
+            vTaskSuspend(NULL);
+            Serial.println("Tasks are disabled");
         }
-        vTaskDelay(pdMS_TO_TICKS(10000));
     }
 }
 
 void checkConnectionTask(void *pvParameters) {
     while (1) {
-        if (!clientIsConnected()) {
+        Serial.println("checkConnectionTask - Checking connection");
+        taskENTER_CRITICAL(&checkConnectionSpinLock);
+        bool connected = clientIsConnected();
+        MQTT_Status_t status = getStatus();
+        taskEXIT_CRITICAL(&checkConnectionSpinLock);
+        if (!connected && status ==  CONNECTED) {
             tasksEnabled = false;
-            Serial.println("MQTT client disconnected");
+            if (sendDataTaskHandle != NULL) {
+                vTaskSuspend(sendDataTaskHandle);
+            }
             clientReconnect();
-        } else {
+            Serial.println("checkConnectionTask - Reconnecting");
+        } else if (connected && status == DISCONNECTED) {
             tasksEnabled = true;
-            Serial.println("WiFi connected");
             setStatus(CONNECTED);
+            if (sendDataTaskHandle != NULL) {
+                vTaskResume(sendDataTaskHandle);
+            }
+            Serial.println("checkConnectionTask - Connected");
+        } else if (status ==  CONNECTED) {
+            tasksEnabled = true;
         }
-        vTaskDelay(pdMS_TO_TICKS(10000));
+        Serial.printf("checkConnectionTask - Status: %s\n", MQTT_GetErrorAsString(status).c_str());
+        vTaskDelay(pdMS_TO_TICKS(20000));
     }
 }
 
 void stopTasks() {
-    vTaskDelete(internalDhtTaskHandle);
-    vTaskDelete(roomDhtTaskHandle);
-    vTaskDelete(infraredTaskHandle);
-    vTaskDelete(sendDataTaskHandle);
-    vTaskDelete(compareDataTaskHandle);
+    if (internalDhtTaskHandle != NULL) {
+        vTaskDelete(internalDhtTaskHandle);
+    }
+    if (roomDhtTaskHandle != NULL) {
+        vTaskDelete(roomDhtTaskHandle);
+    }
+    if (infraredTaskHandle != NULL) {
+        vTaskDelete(infraredTaskHandle);
+    }
+    if (sendDataTaskHandle != NULL) {
+        vTaskDelete(sendDataTaskHandle);
+    }
+    if (compareDataTaskHandle != NULL) {
+        vTaskDelete(compareDataTaskHandle);
+    }
 }

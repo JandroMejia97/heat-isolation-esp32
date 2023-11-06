@@ -4,7 +4,12 @@
 Adafruit_MLX90614 infrared = Adafruit_MLX90614();
 
 void initInfrared() {
-    infrared.begin();
+    Serial.println("MLX90614 - Initializing");
+    if (!infrared.begin()) {
+        Serial.println("MLX90614 - Could not find a valid sensor, check wiring!");
+    } else {
+        Serial.println("MLX90614 - Initialized");
+    }
 }
 
 InfraredData readInfrared() {

@@ -5,7 +5,7 @@
 #include "DHT.h"
 
 #ifndef INTERNAL_DHT_PIN
-#define INTERNAL_DHT_PIN 17
+#define INTERNAL_DHT_PIN GPIO_NUM_16
 #endif
 
 #ifndef INTERNAL_DHT_TEMP_LABEL
@@ -17,7 +17,7 @@
 #endif
 
 #ifndef ROOM_DHT_PIN
-#define ROOM_DHT_PIN 16
+#define ROOM_DHT_PIN GPIO_NUM_17
 #endif
 
 #ifndef ROOM_DHT_TEMP_LABEL

@@ -52,7 +52,7 @@ void clientLoop();
  * @param label - Label of the variable to publish
  * @param value - Value of the variable to publish
  */
-void sendData(char *label, float value);
+void sendData(const char *label, const float value);
 
 /**
  * @brief Function to get the status of the ESP32 as a string
@@ -60,7 +60,7 @@ void sendData(char *label, float value);
  * @param status - Status of the ESP32
  * @return String - Status of the ESP32 as a string
  */
-static String MQTT_GetErrorAsString(MQTT_Status_t status);
+String MQTT_GetErrorAsString(MQTT_Status_t status);
 
 /**
  * @brief Function to initialize the Ubidots client

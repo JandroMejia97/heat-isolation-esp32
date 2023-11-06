@@ -75,10 +75,11 @@ void clientLoop() {
 void callback(char *topic, byte *payload, unsigned int length);
 
 void initMQTT() {
+  Serial.println("MQTT - Initializing");
   // Connecting to a WiFi network
   client.connectToWifi(WIFI_SSID, WIFI_PASSWORD);
   // Set the debug mode
-  client.setDebug(true);
+  client.setDebug(false);
   // Connecting to a mqtt broker
   client.setCallback(callback);
   client.setup();
@@ -87,7 +88,8 @@ void initMQTT() {
   timer = millis();
 }
 
-void sendData(char *label, float value) {
+void sendData(const char *label, const float value) {
+  Serial.println("MQTT - Sending data");
   // Check if the type is valid, and if the index is in range
   MQTT_STATUS = SENDING_DATA;
   // Add the value to the Ubidots client
@@ -97,6 +99,7 @@ void sendData(char *label, float value) {
   long diff = millis() - timer;
   diff = diff < 0 ? -diff : diff;
   if (diff > PUBLISH_FREQUENCY) {
+    Serial.println("MQTT - Publishing data");
     // Publish the data to the Ubidots MQTT broker
     client.publish(DEVICE_LABEL);
     timer = millis();
@@ -105,19 +108,17 @@ void sendData(char *label, float value) {
 }
 
 void callback(char *topic, byte *payload, unsigned int length) {
-  Serial.print("Message arrived in topic: ");
-  Serial.println(topic);
+  Serial.printf("MQTT - Reading data - Topic: %s\n", topic);
   int i;
   char data[length];
   for (i = 0; i < length; i++) {
       data[i] = (char) payload[i];
   }
   data[i] = '\0';
-  Serial.printf("Data: \n%s\n", data);
-  Serial.println("-----------------------");
+  Serial.printf("Data: \n%s\n\n", data);
 }
 
-static String MQTT_GetErrorAsString(MQTT_Status_t status) {
+String MQTT_GetErrorAsString(MQTT_Status_t status) {
   switch (status) {
     case INIT:
       return "MQTT_INIT";

@@ -3,7 +3,7 @@
 #include <Adafruit_MLX90614.h>
 
 #ifndef INFRARED_SCL_PIN
-#define INFRARED_SCL_PIN 21
+#define INFRARED_SCL_PIN GPIO_NUM_21
 #endif
 
 #ifndef INFRARED_OBJ_LABEL
@@ -15,7 +15,7 @@
 #endif
 
 #ifndef INFRARED_SDA_PIN
-#define INFRARED_SDA_PIN 22
+#define INFRARED_SDA_PIN GPIO_NUM_22
 #endif
 
 /**
