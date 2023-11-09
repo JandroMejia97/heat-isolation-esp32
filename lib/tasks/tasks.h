@@ -25,14 +25,4 @@ static bool tasksEnabled = false;
  */
 void initialSetup();
 
-/**
- * @brief Create tasks for reading sensors
- */
-void setupTasks();
-
-/**
- * @brief Stop all tasks
- */
-void stopTasks();
-
 #endif // __LIB_TASKS_TASKS_H__
