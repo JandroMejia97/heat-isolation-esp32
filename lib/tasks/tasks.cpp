@@ -6,7 +6,9 @@ struct DataToSend {
     float value;
 };
 
-void readDhtTask(DHT *dht, const char *tempLabel, const char *humLabel);
+void readDhtTask(float temperature, float humidity, const char *tempLabel, const char *humLabel);
+void readInternalDhtTask(const char *tempLabel, const char *humLabel);
+void readRoomDhtTask(const char *tempLabel, const char *humLabel);
 void readInfraredTask();
 void sendDataTask();
 void compareDataTask();
@@ -17,6 +19,8 @@ void IRAM_ATTR onTimer();
 QueueHandle_t dataQueue;
 
 hw_timer_t *timer = NULL;
+portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
+const int timerTicks = 10000000;
 int timerInterruptCounter = 0;
 
 void initialSetup() {
@@ -34,64 +38,73 @@ void initialSetup() {
         initMQTT();
         tasksEnabled = true;
     }
-
+    delay(2000);
     timer = timerBegin(0, 80, true);
     timerAttachInterrupt(timer, &onTimer, false);
     /**
      * TimerTicks = (TIMER_INTERVAL_S) * (timer frequency / timer prescale)
      * TimerTicks = (5s) * (160MHz / 80) = 10,000,000
      */
-    timerAlarmWrite(timer, 10000000, true);
+    timerAlarmWrite(timer, timerTicks, true);
     timerAlarmEnable(timer);
 }
 
 void IRAM_ATTR onTimer(){
     if (tasksEnabled) {
+        portENTER_CRITICAL_ISR(&timerMux);
         timerInterruptCounter++;
 
-        if (timerInterruptCounter % 2) {
+        if (timerInterruptCounter % 2 == 0) {
             sendDataTask();
         }
 
-        /* if (timerInterruptCounter % 4) {
+        /* if (timerInterruptCounter % 4 == 0) {
             checkConnectionTask();
         } */
 
-        if (timerInterruptCounter % 3) {
+        if (timerInterruptCounter % 3 == 0) {
             DHTReturn internalDHT = getInternalDHT();
-            readDhtTask(internalDHT.dht, internalDHT.tempLabel, internalDHT.humLabel);
+            readInternalDhtTask(internalDHT.tempLabel, internalDHT.humLabel);
         }
 
-        if (timerInterruptCounter % 3) {
+        if (timerInterruptCounter % 3 == 0) {
             DHTReturn roomDHT = getRoomDHT();
-            readDhtTask(roomDHT.dht, roomDHT.tempLabel, roomDHT.humLabel);
+            readRoomDhtTask(roomDHT.tempLabel, roomDHT.humLabel);
         }
 
-        if (timerInterruptCounter % 3) {
+        if (timerInterruptCounter % 3 == 0) {
             readInfraredTask();
         }
 
-        if (timerInterruptCounter % 6) {
+        if (timerInterruptCounter % 6 == 0) {
             timerInterruptCounter = 0;
         }
+        portEXIT_CRITICAL_ISR(&timerMux);
     }
 }
 
-void readDhtTask(DHT *dht, const char *tempLabel, const char *humLabel) {
+void readInternalDhtTask(const char *tempLabel, const char *humLabel) {
+    Serial.printf("readDhtTask - %s\n", tempLabel);
+    float temperature = getInternalTemperature();
+    float humidity = getInternalHumidity();
+    readDhtTask(temperature, humidity, tempLabel, humLabel);
+}
+
+void readRoomDhtTask(const char *tempLabel, const char *humLabel) {
+    Serial.printf("readDhtTask - %s\n", tempLabel);
+    float temperature = getRoomTemperature();
+    float humidity = getRoomHumidity();
+    readDhtTask(temperature, humidity, tempLabel, humLabel);
+}
+
+void readDhtTask(float temperature, float humidity, const char *tempLabel, const char *humLabel) {
     DataToSend tempToSend = DataToSend();
     DataToSend humToSend = DataToSend();
     tempToSend.label = (char *) tempLabel;
     tempToSend.value = 0;
     humToSend.label = (char *) humLabel;
     humToSend.value = 0;
-
-    Serial.printf("readDhtTask - %s\n", tempLabel);
-    if (dht->read(true)) {
-        Serial.println("Failed to read from DHT sensor!");
-    }
-    float temperature = dht->readTemperature();
     tempToSend.value = temperature;
-    float humidity = dht->readHumidity();
     humToSend.value = humidity;
     if (isnan(temperature) || isnan(humidity)) {
         Serial.println("Failed to read from DHT sensor!");

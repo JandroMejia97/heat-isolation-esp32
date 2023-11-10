@@ -36,7 +36,6 @@
 struct DHTReturn {
   char *tempLabel;
   char *humLabel;
-  DHT *dht;
 };
 
 /**
@@ -57,5 +56,10 @@ DHTReturn getInternalDHT();
  * @return DHTReturn 
  */
 DHTReturn getRoomDHT();
+
+float getInternalTemperature();
+float getInternalHumidity();
+float getRoomTemperature();
+float getRoomHumidity();
 
 #endif // __LIB_DHTS_DHTS_H__

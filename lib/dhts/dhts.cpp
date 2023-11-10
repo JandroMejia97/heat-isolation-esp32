@@ -11,11 +11,9 @@ void initDHTs() {
 
     internalDHTReturn.tempLabel = INTERNAL_DHT_TEMP_LABEL;
     internalDHTReturn.humLabel = INTERNAL_DHT_HUM_LABEL;
-    internalDHTReturn.dht = &internalDHT;
 
     roomDHTReturn.tempLabel = ROOM_DHT_TEMP_LABEL;
     roomDHTReturn.humLabel = ROOM_DHT_HUM_LABEL;
-    roomDHTReturn.dht = &roomDHT;
     Serial.println("DTH11 - Initialized");
 }
 
@@ -26,3 +24,20 @@ DHTReturn getInternalDHT() {
 DHTReturn getRoomDHT() {
     return roomDHTReturn;
 }
+
+float getInternalTemperature() {
+    return internalDHT.readTemperature();
+}
+
+float getInternalHumidity() {
+    return internalDHT.readHumidity();
+}
+
+float getRoomTemperature() {
+    return roomDHT.readTemperature();
+}
+
+float getRoomHumidity() {
+    return roomDHT.readHumidity();
+}
+

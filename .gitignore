@@ -5,7 +5,7 @@
 .vscode/launch.json
 .vscode/ipch
 sdkconfig.*
-
+libs/
 # File with credentials
 credentials.h
 
