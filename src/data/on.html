@@ -88,23 +88,36 @@
     </div>
 
     <script>
-        // Leer el JSON con las mediciones de los sensores
-        var mediciones = JSON.parse('{"temperaturaInterna": 25, "temperaturaExterna": 20, "estadoPrototipo": "WAITING"}');
+        // Función para obtener y actualizar los datos del servidor
+        function fetchData() {
+            fetch(location.origin + "/status")
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("temperaturaInterna").innerHTML = data.temperaturaInterna;
+                    document.getElementById("temperaturaExterna").innerHTML = data.temperaturaExterna;
+                    document.getElementById("estadoPrototipo").innerHTML = data.estadoPrototipo;
+                })
+                .catch(error => console.error('Error fetching data:', error));
+        }
 
-        // Mostrar los datos en el centro de la pantalla en etiquetas
-        document.getElementById("temperaturaInterna").innerHTML = mediciones.temperaturaInterna;
-        document.getElementById("temperaturaExterna").innerHTML = mediciones.temperaturaExterna;
-        document.getElementById("estadoPrototipo").innerHTML = mediciones.estadoPrototipo;
+        // Configurar el intervalo para realizar el fetch cada segundo
+        var fetchInterval = setInterval(fetchData, 1000);
 
         // Crear un botón de off para apagar el prototipo
         var offButton = document.getElementById("off");
         offButton.addEventListener("click", function() {
+            // Detener el intervalo antes de redirigir
+            clearInterval(fetchInterval);
+
             // Apagar el prototipo
             window.location.href = "main.html";
         });
 
         // Función para redirigir a la página de informe
         function goToInforme() {
+            // Detener el intervalo antes de redirigir
+            clearInterval(fetchInterval);
+
             window.location.href = "informe.html";
         }
     </script>
