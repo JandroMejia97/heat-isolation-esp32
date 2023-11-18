@@ -77,26 +77,29 @@
         <hr>
         <h1>Heat Isolation</h1>
         <br><br>
-        <button id="powerButton">Encender prototipo</button>
-        <br><br>
-        <label for="desiredTemperature">Temperatura deseada (en °C):</label>
-        <input type="number" id="desiredTemperature" name="desiredTemperature" min="0" max="80">
-        
-        <!-- Nuevo cuadro de texto -->
-        <label for="samplingFrequency">Frecuencia de muestreo (en ms):</label>
-        <input type="number" id="samplingFrequency" name="samplingFrequency" min="1" max="180">
+        <form id="prototypeForm" action="/SetText" method="post">
+            <label for="desiredTemperature">Temperatura deseada (en °C):</label>
+            <input type="number" id="desiredTemperature" name="desiredTemperature" min="1" max="80"required>
+
+            <!-- Nuevo cuadro de texto -->
+            <label for="samplingFrequency">Frecuencia de muestreo (en ms):</label>
+            <input type="number" id="samplingFrequency" name="samplingFrequency" min="1" max="180" required>
+            <br><br>
+            <button type="submit" id="powerButton">Encender prototipo</button>
+        </form>
     </div>
 
     <script>
-        var powerButton = document.getElementById('powerButton');
-        const desiredTemperature = document.getElementById('desiredTemperature');
-        const samplingFrequency = document.getElementById('samplingFrequency');
-    
-        powerButton.addEventListener("click", function(){
-            window.location.href = "on.html"
+        var prototypeForm = document.getElementById('prototypeForm');
+
+        prototypeForm.addEventListener("submit", function(event){
+            event.preventDefault(); // Evita que se recargue la página al enviar el formulario
+
+            // Aquí puedes realizar acciones adicionales antes del envío si es necesario
+
+            prototypeForm.submit(); // Envía el formulario
         });
     </script>
-    
 
     <footer>
         Proyecto desarrollado por: Alejandro Carlos Hernández Mejía, Gabriel Santiago Torres, Francisco Fernández
