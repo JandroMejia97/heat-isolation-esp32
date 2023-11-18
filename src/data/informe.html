@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Informe de Temperatura</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .container {
+            margin-top: 220px;
+            text-align: center;
+            width: 80%;
+        }
+
+        h1 {
+            color: #333;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        footer {
+            background-color: #333;
+            color: white;
+            padding: 10px;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+        
+        .button-container {
+            margin-bottom: 80px; /* Ajusta el margen según sea necesario */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Informe de Temperatura</h1>
+        <div class="table-container">
+            <table id="informeTable">
+                <tr>
+                    <th>Temperatura Externa</th>
+                    <th>Temperatura Interna</th>
+                    <th>Diferencia</th>
+                </tr>
+            </table>
+        </div>
+        <br>
+        <hr>
+        <div class="button-container">
+            <button onclick="goToMain()">Volver a la Página Principal</button>
+        </div>
+    </div>
+
+    <script>
+        // JSON con las mediciones de temperatura
+        var mediciones = [
+        { temperaturaExterna: 20, temperaturaInterna: 25, diferencia: 5 },
+            { temperaturaExterna: 22, temperaturaInterna: 27, diferencia: 5 },
+            { temperaturaExterna: 24, temperaturaInterna: 29, diferencia: 5 },
+            { temperaturaExterna: 29, temperaturaInterna: 89, diferencia: 60 },
+            { temperaturaExterna: 20, temperaturaInterna: 25, diferencia: 5 },
+            { temperaturaExterna: 22, temperaturaInterna: 27, diferencia: 5 },
+            { temperaturaExterna: 24, temperaturaInterna: 29, diferencia: 5 },
+            { temperaturaExterna: 29, temperaturaInterna: 89, diferencia: 60 },
+            { temperaturaExterna: 20, temperaturaInterna: 25, diferencia: 5 },
+            { temperaturaExterna: 22, temperaturaInterna: 27, diferencia: 5 },
+            { temperaturaExterna: 24, temperaturaInterna: 29, diferencia: 5 },
+            { temperaturaExterna: 29, temperaturaInterna: 89, diferencia: 60 },
+            { temperaturaExterna: 20, temperaturaInterna: 25, diferencia: 5 },
+            { temperaturaExterna: 22, temperaturaInterna: 27, diferencia: 5 },
+            { temperaturaExterna: 24, temperaturaInterna: 29, diferencia: 5 },
+            { temperaturaExterna: 29, temperaturaInterna: 89, diferencia: 60 }
+            // ... puedes agregar más datos según sea necesario
+        ];
+
+        // Función para llenar la tabla con datos del JSON
+        function fillTable() {
+            var table = document.getElementById("informeTable");
+
+            mediciones.forEach(function (medicion) {
+                var row = table.insertRow();
+                var cell1 = row.insertCell(0);
+                var cell2 = row.insertCell(1);
+                var cell3 = row.insertCell(2);
+
+                cell1.innerHTML = medicion.temperaturaExterna + '°C';
+                cell2.innerHTML = medicion.temperaturaInterna + '°C';
+                cell3.innerHTML = medicion.diferencia + '°C';
+            });
+        }
+
+        fillTable(); // Llenar la tabla al cargar la página
+
+        function goToMain() {
+            window.location.href = "main.html";
+        }
+    </script>
+
+    <footer>
+        Proyecto desarrollado por: Alejandro Carlos Hernández Mejía, Gabriel Santiago Torres, Francisco Fernández
+    </footer>
+</body>
+</html>
