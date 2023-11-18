@@ -1,10 +1,10 @@
-#include <WiFi.h>
-#include <configAP.h>  // Sustituir con datos de nuestra red
-#include <Ethernet.h>
+#include <configAP.h>
 
 IPAddress ip(192, 168, 1, 200);
 IPAddress gateway(192, 168, 1, 1);
 IPAddress subnet(255, 255, 255, 0);
+
+AsynWebServer server(80);
 
 void ConnectWiFi_AP(bool useStaticIP = false)
 { 
@@ -29,6 +29,10 @@ void setup()
 {
   Serial.begin(115200);
   ConnectWiFi_AP();
+
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest * request)){
+    request -> send (SPIFFS, "/index.html", String(), false)
+  });
 }
 
 void loop() 

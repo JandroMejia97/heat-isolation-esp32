@@ -1,9 +1,9 @@
-#include <Ethernet.h>
+#include <WiFi.h>
+#include <WebServer.h>
+#include <SPIFFS.h>
+#include "Server.cpp"
+#include "ESP32_Utils_Server.cpp"
 
-const char* ssid     = "Telecentro-23b0";
-const char* password = "Torres54321";
-const char* hostname = "ESP32_1";
-
-IPAddress ip(192, 168, 1, 200);
-IPAddress gateway(192, 168, 1, 1);
-IPAddress subnet(255, 255, 255, 0);
+const char* ssid = "ESP32-Acces-Point";
+const char* password = "12345678";
+const char* hostname = "ESP32";

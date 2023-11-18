@@ -1,7 +1,5 @@
  #include <WiFi.h>
- #include <Adafruit_MLX90614.h>
  #include <Arduino.h>
- #include <SPI.h>
 
 //------------------Servidor Web en puerto 80---------------------
 
