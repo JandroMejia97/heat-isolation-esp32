@@ -4,9 +4,10 @@
 .vscode/c_cpp_properties.json
 .vscode/launch.json
 .vscode/ipch
-
+sdkconfig.*
+libs/
 # File with credentials
-wifi_credentials.h
+credentials.h
 
 # Prerequisites
 *.d

@@ -1,3 +1,8 @@
 {
-    "C_Cpp.errorSquiggles": "enabled"
+  "C_Cpp.errorSquiggles": "enabled",
+  "sonarlint.pathToCompileCommands": "${workspaceFolder}\\.pio\\build\\nodemcu-32s\\compile_commands.json",
+  "files.associations": {
+    "*.ts": "typescript",
+    "adafruit_mlx90614.h": "c"
+  }
 }
