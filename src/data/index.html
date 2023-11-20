@@ -82,8 +82,8 @@
             <input type="number" id="desiredTemperature" name="desiredTemperature" min="1" max="80"required>
 
             <!-- Nuevo cuadro de texto -->
-            <label for="samplingFrequency">Desired Temperature (in ms):</label>
-            <input type="number" id="samplingFrequency" name="samplingFrequency" min="1" max="180" required>
+            <label for="samplingFrequency">Sampling Frequency (in ms):</label>
+            <input type="number" id="samplingFrequency" name="samplingFrequency" min="1" max="240" required>
             <br><br>
             <button type="submit" id="powerButton">Start</button>
         </form>
@@ -91,15 +91,34 @@
 
     <script>
         var prototypeForm = document.getElementById('prototypeForm');
-
-        prototypeForm.addEventListener("submit", function(event){
+    
+        prototypeForm.addEventListener("submit", function(event) {
             event.preventDefault(); // Evita que se recargue la página al enviar el formulario
-
+    
             // Aquí puedes realizar acciones adicionales antes del envío si es necesario
+            function fetchData() {
+                fetch("https://655935cce93ca47020aa2249.mockapi.io/heater/informe/1")
+                    .then(response => response.json())
+                    .then(data => {
+                        // Comparar la temperatura ingresada con la internalTemp
+                        var temperaturaDeseada = parseInt(document.getElementById('desiredTemperature').value, 10); //¿Es necesario utilizar el parseInt?
+                        if (temperaturaDeseada > data.internalTemp) {
+                            // Si la temperatura ingresada es mayor, enviar el formulario
+                            prototypeForm.submit();
+                            window.location.href = "on.html";
 
-            prototypeForm.submit(); // Envía el formulario
+                        } else {
+                            // Si la temperatura ingresada no es mayor, mostrar un mensaje o realizar alguna acción
+                            alert("La temperatura deseada debe ser mayor que la temperatura interna actual.");
+                        }
+                    })
+                    .catch(error => console.error('Error fetching data:', error));
+            }
+    
+            fetchData(); // Llama a fetchData para realizar la comparación y decidir si enviar el formulario o no
         });
     </script>
+    
 
     <footer>
         Proyect developed by: Alejandro Hernández Mejía, Gabriel Torres, Francisco Fernández
