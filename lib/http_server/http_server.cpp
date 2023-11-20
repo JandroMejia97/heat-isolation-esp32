@@ -8,7 +8,11 @@ void sendResponse(DynamicJsonDocument doc, AsyncWebServerRequest *request){
     serializeJson(doc, response);
 
     //enviar la respuesta
-    request->send(200, "application/json", response);
+    if (doc.containsKey("error")) {
+        request->send(400, "application/json", response);
+    } else {
+        request->send(200, "application/json", response);
+    }
 }
 
 //Funcion que recibe los datos del front y debe validar 
@@ -20,8 +24,8 @@ void handleFormRoot(AsyncWebServerRequest *request){
     String desiredFreqStr = request->arg("desiredFrequency");
 
     //conversion a entero de los datos
-    int dF = desiredFreqStr.toInt();
-    int dT = desiredTempStr.toInt();
+    u_int8_t desiredFrequency = desiredFreqStr.toInt();
+    u_int8_t desiredTemp = desiredTempStr.toInt();
 
     /*deberia leer los datos actuales para compararlos con los que obtuve del front
        por el momento lo hare de forma estatica, se deberia leer los sensores
@@ -32,32 +36,19 @@ void handleFormRoot(AsyncWebServerRequest *request){
     int roomTemp = 23, internalTemp = 24;
 
     int condition;
-    if (dT <= roomTemp) {
-        condition = 1;
-    } else if (internalTemp > dT) {
-        condition = 2;
+    if (desiredTemp <= roomTemp) {
+        reporte["error"] = "La temperatura ingresada no supera la temperatura ambiente";
+    } else if (internalTemp > desiredTemp) {
+        reporte["error"] = "La temperatura ingresada no supera la temperatura interna del recipiente";
     } else {
-        condition = 3;
+        reporte["success"] = "La temperatura ingresada cumple las condiciones";
     }
 
-    switch(condition) {
-        case 1:
-            reporte["errorAmb"]="La temperatura ingresada no supera la temperatura ambiente";
-            sendResponse(reporte, request);
-            break;
-        case 2:
-            reporte["errorInt"]="La temperatura ingresada no supera la temperatura interna del recipiente";
-            sendResponse(reporte, request);
-            break;
-        case 3:
-            reporte["exito"]="La temperatura ingresada cumple las condiciones";
-            sendResponse(reporte, request);
-            break;
-    }
+    sendResponse(reporte, request);
 }
 
 //Funcion que recibe el formulario para "/on"
-void handleFormOn(AsyncWebServerRequest *request){
+void handleGetStatus(AsyncWebServerRequest *request){
     /*deberia volver a leer los datos actuales para actualizar la temperatura y el estado (COOLING, etc)
        por el momento lo hare de forma estatica, se deberia leer los sensores
     
@@ -74,14 +65,14 @@ void handleFormOn(AsyncWebServerRequest *request){
     //llenar un JSON con los datos
     values["externalTemp"] = roomTemp;
     values["internalTemp"] = intTemp;
-    values["prototypeState"] = state;
+    values["status"] = state;
     serializeJson(values, response);
 
      //Incluir los datos del JSON y el archivo "on.html"
     request->send(200, "application/json", response);
 }
 
-void InitServer(){
+void initServer(){
     //Ruteo para "/"
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
         request->send(200, "text/plain", "index.html");
@@ -96,7 +87,7 @@ void InitServer(){
     });
 
     //cuando quiera actualizar los datos se debe solicitar al /on/update
-    server.on("/on/update", HTTP_GET, handleFormOn);
+    server.on("/status", HTTP_GET, handleGetStatus);
     
     //Ruteo para "/informe"
     server.on("/informe", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -114,32 +105,26 @@ void InitServer(){
 }
 
 //Inicio del ESP en modo Access Point
-void ConnectWiFi_AP(bool useStaticIP = false)
-{ 
-   Serial.println("");
-   WiFi.mode(WIFI_AP);
-   Serial.print("Conectando");
-   while(!WiFi.softAP(ssid, password))
-   {
-     Serial.println(".");
-     delay(100);
-   }
+void connectWiFiAP(bool useStaticIP = false) { 
+    WiFi.mode(WIFI_AP);
+    Serial.println("Conectando");
+    while(!WiFi.softAP(ssid, password)) {
+        Serial.print(".");
+        delay(100);
+    }
    if(useStaticIP) WiFi.softAPConfig(ip, gateway, subnet);
-
-   Serial.println("");
    Serial.print("Iniciando AP:\t");
    Serial.println(ssid);
    Serial.print("IP address:\t");
    Serial.println(WiFi.softAPIP());
 }
 
-void setup() 
-{
+void setup() {
   Serial.begin(115200);
-  ConnectWiFi_AP();
-  InitServer();
+  connectWiFiAP();
+  initServer();
 }
 
 void loop(){
-    //en el loop no debemos tener nada del servidor (server.handleClient()) ya que es asincrono
+    
 }
