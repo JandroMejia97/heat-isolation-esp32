@@ -1,10 +1,10 @@
-#include "tasks.h"
+#include "handler.h"
 
 void setup() {
-  Serial.begin(115200);
-  initialSetup();
+    Serial.begin(115200);
+    initialize();
 }
 
 void loop() {
-  // Empty
+    loopHandler();
 }

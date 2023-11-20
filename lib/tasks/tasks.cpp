@@ -35,10 +35,9 @@ void initialSetup() {
     if (dataQueue == NULL) {
         Serial.println("Failed to create data queue");
     } else {
-        initMQTT();
         tasksEnabled = true;
     }
-    delay(2000);
+    delay(1000);
     timer = timerBegin(0, 80, true);
     timerAttachInterrupt(timer, &onTimer, false);
     /**
@@ -53,10 +52,6 @@ void IRAM_ATTR onTimer(){
     if (tasksEnabled) {
         portENTER_CRITICAL_ISR(&timerMux);
         timerInterruptCounter++;
-
-        if (timerInterruptCounter % 2 == 0) {
-            sendDataTask();
-        }
 
         /* if (timerInterruptCounter % 4 == 0) {
             checkConnectionTask();
@@ -143,35 +138,5 @@ void readInfraredTask() {
         if (xQueueSend(dataQueue, &ambientDataToSend, xTicksToWait) != pdTRUE) {
             Serial.println("Failed to send ambient temperature data to queue");
         }
-    }
-}
-
-void sendDataTask() {
-    Serial.println("sendDataTask - Trying to send data");
-    DataToSend dataToSend;
-    if (xQueueReceive(dataQueue, &dataToSend, 0)) {
-        Serial.printf("sendDataTask - %s: %.2f\n", dataToSend.label, dataToSend.value);
-        sendData(dataToSend.label, dataToSend.value);
-    } else {
-        Serial.println("sendDataTask - No data to send");
-    }
-}
-
-void checkConnectionTask() {
-    Serial.println("checkConnectionTask - Checking connection");
-    MQTT_Status_t status = getStatus();
-    bool connected = clientIsConnected();
-    Serial.printf("checkConnectionTask - Status: %s\n", MQTT_GetErrorAsString(status).c_str());
-    if (!connected && status ==  CONNECTED) {
-        tasksEnabled = false;
-        clientReconnect();
-        Serial.println("checkConnectionTask - Reconnecting");
-    } else if (connected && status == DISCONNECTED) {
-        tasksEnabled = true;
-        setStatus(CONNECTED);
-        Serial.println("checkConnectionTask - Connected");
-    } else if (status ==  CONNECTED) {
-        tasksEnabled = true;
-        Serial.println("checkConnectionTask - Tasks enabled");
     }
 }
