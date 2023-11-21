@@ -8,8 +8,8 @@ struct DataToSend {
     float value;
 };
 
-void readDhtTask(float temperature, float humidity, const char *tempLabel, const char *humLabel);
-void readDhtSensorTask(const char *tempLabel, const char *humLabel, DHT *sensor);
+void readDhtTask(float temperature, const char *tempLabel);
+void readDhtSensorTask(const char *tempLabel, DHT *sensor);
 void readInfraredTask();
 void compareDataTask();
 
@@ -19,7 +19,7 @@ QueueHandle_t dataQueue;
 u_int8_t delayCounters = 0;
 u_int8_t timerInterruptCounter = 0;
 
-void initialize() {
+void initHandler() {
     Serial.println("Initial setup");
     devStatus = INIT;
     // Initialize sensors
@@ -45,8 +45,8 @@ void statusHandler(void) {
         digitalWrite(GPIO_NUM_4, LOW);
         return;
     }
-    const float internalTemp = getInternalDHTSensor()->readTemperature();
-    const float externalTemp = getRoomDHTSensor()->readTemperature();
+    const float internalTemp = getInternalTemp();
+    const float externalTemp = getExternalTemp();
     const float internalError = relError(desiredTemp, internalTemp);
     const float objectTemp = readInfrared().objectTemp;
 
@@ -85,12 +85,13 @@ void statusHandler(void) {
                 devStatus = WARMING_UP;
             }
             break;
-        case COOLING_DOWN:
+        case COOLING_DOWN: {
             const float externalError = relError(externalTemp, internalTemp);
             if (externalError <= MAX_RELATIVE_ERROR) {
                 devStatus = WAITING;
             }
             break;
+        }
         case ERROR:
             Serial.printf("Error: Internal temperature: %f, Object temperature: %f, External temperature: %f\n", internalTemp, objectTemp, externalTemp);
             break;
@@ -143,30 +144,22 @@ const char *getDevStatusString(void) {
    }
 }
 
-void readDhtSensorTask(const char *tempLabel, const char *humLabel, DHT *sensor) {
+void readDhtSensorTask(const char *tempLabel, DHT *sensor) {
     float temperature = sensor->readTemperature();
-    float humidity = sensor->readHumidity();
-    readDhtTask(temperature, humidity, tempLabel, humLabel);
+    readDhtTask(temperature, tempLabel);
 }
 
-void readDhtTask(float temperature, float humidity, const char *tempLabel, const char *humLabel) {
+void readDhtTask(float temperature, const char *tempLabel) {
     DataToSend tempToSend = DataToSend();
-    DataToSend humToSend = DataToSend();
     tempToSend.label = (char *) tempLabel;
     tempToSend.value = 0;
-    humToSend.label = (char *) humLabel;
-    humToSend.value = 0;
     tempToSend.value = temperature;
-    humToSend.value = humidity;
-    if (isnan(temperature) || isnan(humidity)) {
+    if (isnan(temperature)) {
         Serial.println("Failed to read from DHT sensor!");
     } else if (devStatus == COOLING_DOWN) {
         const TickType_t xTicksToWait = pdMS_TO_TICKS(10000);
         if (xQueueSend(dataQueue, &tempToSend, xTicksToWait) != pdPASS) {
             Serial.println("Failed to send temperature data to queue");
-        }
-        if (xQueueSend(dataQueue, &humToSend, xTicksToWait) != pdPASS) {
-            Serial.println("Failed to send humidity data to queue");
         }
     }
 }
@@ -175,20 +168,22 @@ void readInfraredTask() {
     DataToSend objectDataToSend;
     objectDataToSend.label = INFRARED_OBJ_LABEL;
 
-    DataToSend ambientDataToSend;
-    ambientDataToSend.label = INFRARED_ROOM_LABEL;
     InfraredData infraredData = readInfrared();
     objectDataToSend.value = infraredData.objectTemp;
-    ambientDataToSend.value = infraredData.ambientTemp;
-    if (isnan(infraredData.objectTemp) || isnan(infraredData.ambientTemp)) {
+    if (isnan(infraredData.objectTemp)) {
         Serial.println("Failed to read from infrared sensor!");
     } else if (devStatus == COOLING_DOWN) {
         const TickType_t xTicksToWait = pdMS_TO_TICKS(10000);
         if (xQueueSend(dataQueue, &objectDataToSend, xTicksToWait) != pdTRUE) {
             Serial.println("Failed to send object temperature data to queue");
         }
-        if (xQueueSend(dataQueue, &ambientDataToSend, xTicksToWait) != pdTRUE) {
-            Serial.println("Failed to send ambient temperature data to queue");
-        }
     }
+}
+
+float getInternalTemp() {
+    return getInternalDHTSensor()->readTemperature();
+}
+
+float getExternalTemp() {
+    return getRoomDHTSensor()->readTemperature();
 }

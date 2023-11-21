@@ -57,11 +57,21 @@ const char *getDevStatusString();
 /**
  * @brief Initialize global variables and sensors
  */
-void initialize();
+void initHandler();
 
 /**
  * @brief Handler for device status
  */
 void loopHandler();
+
+/**
+ * @brief Get internal temperature
+ */
+float getInternalTemp();
+
+/**
+ * @brief Get external temperature
+ */
+float getExternalTemp();
 
 #endif // __LIB_HANDLER_HANDLER_H__
