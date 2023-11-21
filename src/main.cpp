@@ -1,4 +1,4 @@
-#include "handler.h"
+#include "http_server.h"
 
 void setup() {
     Serial.begin(115200);
@@ -6,5 +6,4 @@ void setup() {
 }
 
 void loop() {
-    loopHandler();
 }
