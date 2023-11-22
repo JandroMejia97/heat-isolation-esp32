@@ -18,7 +18,6 @@
 
 /** Flag if task should run */
 static bool tasksEnabled = false;
-static u_int8_t desiredTemp = 0;
 
 /**
  * @brief Device status
@@ -59,6 +58,11 @@ void setDevStatus(Dev_Status_t status);
  * @brief Set sampling time in ms
  */
 void setCoolingDownTimeInMS(u_int32_t coolingDownTimeInMS);
+
+/**
+ * @brief Get desired temperature in C
+ */
+u_int8_t getDesiredTemp();
 
 /**
  * @brief Set desired temperature in C

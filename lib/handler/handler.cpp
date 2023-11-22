@@ -173,6 +173,10 @@ void setCoolingDownTimeInMS(u_int32_t coolingDownTimeInMS) {
     coolingDownTimeInMS = coolingDownTimeInMS;
 }
 
+u_int8_t getDesiredTemp() {
+    return desiredTemp;
+}
+
 void setDesiredTemp(u_int8_t desiredTemp) {
     desiredTemp = desiredTemp;
 }
