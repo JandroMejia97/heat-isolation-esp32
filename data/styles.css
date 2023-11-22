@@ -14,9 +14,10 @@ body {
   width: 80%;
 }
 
-h1 {
+h1,
+h2 {
   color: #333;
-  margin-top: 1.35rem;
+  margin-top: 1.25rem;
 }
 
 hr {

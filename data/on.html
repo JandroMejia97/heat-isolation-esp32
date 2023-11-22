@@ -3,19 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prototipo de control de temperatura</title>
+    <title>
+        Heat Isolation - On
+    </title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
-        <h1>Taller de Proyecto II</h1>
+        <h1>
+            Monitoring
+        </h1>
         <hr>
-        <h1>Heat Isolation</h1>
         <br><br>
         <div id="mediciones">
-            <label for="deviceStatus">Estado del Prototipo: <span id="deviceStatus"></span></label>
-            <label for="internalTemp">Temperatura Interna: <span id="internalTemp"></span></label>
-            <label for="externalTemp">Temperatura Externa: <span id="externalTemp"></span></label>
+            <label for="deviceStatus">Device Status: <span id="deviceStatus"></span></label>
+            <label for="internalTemp">Internal Temperature: <span id="internalTemp"></span></label>
+            <label for="externalTemp">External Temperature: <span id="externalTemp"></span></label>
         </div>
         <div class="buttons-container">
             <a href="/" onclick="clearDataFetchInterval()" class="secondary">Apagar</a>
@@ -25,7 +28,7 @@
 
     <script src="/index.js" onload="setupOnPage()"></script>
     <footer>
-        Proyecto desarrollado por: Alejandro Carlos Hernández Mejía, Gabriel Santiago Torres, Francisco Fernández
+        Project developed by: Alejandro Mejía, Gabriel Torres & Francisco Fernández
     </footer>
 </body>
 </html>
