@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heat Isolation Prototype</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            text-align: center;
+            width: 80%;
+        }
+
+        h1 {
+            color: #333;
+            margin-top: 20px;
+        }
+
+        hr {
+            width: 50%;
+            margin: 20px auto;
+            border: 1px solid #333;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        label {
+            display: block;
+            margin-top: 20px;
+            font-size: 18px;
+            color: #333;
+        }
+
+        input {
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        footer {
+            background-color: #333;
+            color: white;
+            padding: 10px;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Taller de Proyecto II</h1>
+        <hr>
+        <h1>Heat Isolation</h1>
+        <br><br>
+        <form id="prototypeForm" action="/" method="post">
+            <label for="desiredTemperature">Desired Temperature (in °C):</label>
+            <input 
+                min="1"
+                max="80"
+                required
+                type="number" 
+                id="desiredTemperature" 
+                name="desiredTemperature" 
+            />
+
+            <!-- Nuevo cuadro de texto -->
+            <label for="samplingFrequency">Sampling Frequency (in Sec.):</label>
+            <input 
+                min="1"
+                required
+                max="240"
+                type="number" 
+                id="samplingFrequency" 
+                name="samplingFrequency"
+            />
+            <br><br>
+            <button type="submit" id="powerButton">Start</button>
+        </form>
+    </div>
+
+    <script>
+        var statusData = null;
+        const baseUrl = `${location.protocol}//${location.host}`;
+
+        function getStatus() {
+            return fetch(`${baseUrl}/status`)
+                .then((response) => response.json())
+                .catch((error) => console.error('Error fetching data:', error));
+        }
+
+        function initializeDevice(desiredTemperature, desiredFrequency) {
+            return fetch(`${baseUrl}/on`, {
+                method: 'POST',
+                body: {
+                    desiredFrequency,
+                    desiredTemperature
+                }
+            }).then((response) => response.json())
+        }
+
+        document.onload = async function() {
+            // Al cargar la página, se obtiene la información de la API
+            statusData = await getStatus();
+            const { internalTemp, externalTemp } = statusData;
+            const desiredTemperature = document.getElementById('desiredTemperature');
+            desiredTemperature.min = internalTemp;
+        }
+
+        const prototypeForm = document.getElementById('prototypeForm');
+    
+        prototypeForm.addEventListener("submit", function(event) {
+            event.preventDefault();
+            // Comparar la temperatura ingresada con la internalTemp
+            const desiredTemperature = +document.getElementById('desiredTemperature').value;
+            const desiredFrequency = +document.getElementById('samplingFrequency').value;
+
+            initializeDevice(desiredTemperature, desiredFrequency).then(() => {
+                window.location.href = "on.html";
+            }).catch((error) => {
+                if (error.status === 400 && error.error) {
+                    alert(error.error);
+                }
+            })
+        });
+    </script>
+    
+
+    <footer>
+        Proyect developed by: Alejandro Hernández Mejía, Gabriel Torres, Francisco Fernández
+    </footer>
+</body>
+</html>
