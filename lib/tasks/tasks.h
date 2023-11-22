@@ -14,9 +14,6 @@
 #include "infrared.h"
 #include "dhts.h"
 
-/** MQTT libraries for publishing data */
-#include "mqtt.h"
-
 /** Flag if task should run */
 static bool tasksEnabled = false;
 

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        Heat Isolation - Home
+    </title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Taller de Proyecto II</h1>
+        <hr>
+        <h2>Heat Isolation</h2>
+        <br><br>
+        <form id="prototypeForm" action="/" method="post">
+            <label for="desiredTemperature">Desired Temperature (in °C):</label>
+            <input 
+                min="1"
+                max="80"
+                required
+                type="number" 
+                id="desiredTemperature" 
+                name="desiredTemperature" 
+            />
+
+            <!-- Nuevo cuadro de texto -->
+            <label for="samplingFrequency">Sampling Frequency (in Sec.):</label>
+            <input 
+                min="1"
+                required
+                max="240"
+                type="number" 
+                id="samplingFrequency" 
+                name="samplingFrequency"
+            />
+            <div class="buttons-container">
+                <button type="submit" id="powerButton">Start</button>
+            </div>
+        </form>
+    </div>
+
+    <script src="/index.js" onload="setupMainPage()"></script>
+
+    <footer>
+        Project developed by: Alejandro Mejía, Gabriel Torres & Francisco Fernández
+    </footer>
+</body>
+</html>
