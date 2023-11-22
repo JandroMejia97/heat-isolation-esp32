@@ -104,15 +104,15 @@ function setDataFetchInterval() {
  */
 async function getStatusData() {
   const statusData = await getStatus();
-  const { internalTemp, externalTemp, desiredTemperature, status } = statusData;
+  const { internalTemp, externalTemp, desiredTemp, status } = statusData;
   const internalTempElement = document.getElementById('internalTemp');
   const externalTempElement = document.getElementById('externalTemp');
-  const desiredTemperatureElement = document.getElementById('desiredTemperature');
+  const desiredTempElement = document.getElementById('desiredTemp');
   const statusElement = document.getElementById('status');
 
   internalTempElement.innerHTML = `${internalTemp ?? '--'} °C`;
   externalTempElement.innerHTML = `${externalTemp ?? '--'} °C`;
-  desiredTemperatureElement.innerHTML = `${desiredTemperature ?? '--'} °C`;
+  desiredTempElement.innerHTML = `${desiredTemp ?? '--'} °C`;
   statusElement.innerHTML = status;
   if (previousStatus !== 'OFF' && status === 'OFF') {
     clearDataFetchInterval();
