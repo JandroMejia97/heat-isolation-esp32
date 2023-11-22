@@ -1,5 +1,6 @@
 var statusData = null;
 let interval = null;
+let previousStatus = null;
 const baseUrl = `${location.protocol}//${location.host}`;
 
 // Functions for /
@@ -113,10 +114,11 @@ async function getStatusData() {
   externalTempElement.innerHTML = `${externalTemp ?? '--'} °C`;
   desiredTemperatureElement.innerHTML = `${desiredTemperature ?? '--'} °C`;
   statusElement.innerHTML = status;
-  if (status === 'off') {
+  if (previousStatus !== 'OFF' && status === 'OFF') {
     clearDataFetchInterval();
     location.href = '/';
   }
+  previousStatus = status;
 }
 
 // Functions for /report
