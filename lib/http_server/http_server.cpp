@@ -175,3 +175,7 @@ void initialize() {
         return;
     }
 }
+
+void serverLoop() {
+    loopHandler();
+}
