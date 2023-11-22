@@ -4,72 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prototipo de control de temperatura</title>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-
-        .container {
-            text-align: center;
-            width: 80%;
-        }
-
-        h1 {
-            color: #333;
-            margin-top: 20px;
-        }
-
-        p {
-            font-size: 18px;
-            color: #333;
-            margin: 10px 0;
-        }
-
-        label {
-            display: block;
-            font-size: 18px;
-            color: #333;
-            margin: 10px 0;
-        }
-
-        button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 20px;
-            font-size: 16px;
-            border: none;
-            cursor: pointer;
-            border-radius: 5px;
-            margin-top: 20px;
-        }
-
-        button:hover {
-            background-color: #45a049;
-        }
-
-        .button-container {
-            display: flex;
-            justify-content: center;
-            margin-top: 20px;
-            gap: 16px;
-        }
-
-        footer {
-            background-color: #333;
-            color: white;
-            padding: 10px;
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
@@ -78,57 +13,17 @@
         <h1>Heat Isolation</h1>
         <br><br>
         <div id="mediciones">
-            <label for="estadoPrototipo">Estado del Prototipo: <span id="estadoPrototipo"></span></label>
-            <label for="temperaturaInterna">Temperatura Interna: <span id="temperaturaInterna"></span></label>
-            <label for="temperaturaExterna">Temperatura Externa: <span id="temperaturaExterna"></span></label>
+            <label for="deviceStatus">Estado del Prototipo: <span id="deviceStatus"></span></label>
+            <label for="internalTemp">Temperatura Interna: <span id="internalTemp"></span></label>
+            <label for="externalTemp">Temperatura Externa: <span id="externalTemp"></span></label>
         </div>
-        <div class="button-container">
-            <button id="off">Apagar</button>
-            <button onclick="goToInforme()">Detener</button>
+        <div class="buttons-container">
+            <a href="/" onclick="clearDataFetchInterval()" class="secondary">Apagar</a>
+            <a href="/report" onclick="clearDataFetchInterval()">Finalizar</a>
         </div>
     </div>
 
-    <script>
-        // Inicializar el contador
-        //var url = `${location.origin}`;
-        var url = "http://192.168.4.1"
-        // Función para obtener y actualizar los datos del servidor
-        function fetchData() {
-            // Construir la URL con el contador actual
-    
-            fetch(`${url}/status`)
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById("temperaturaInterna").innerHTML = data.internalTemp;
-                    document.getElementById("temperaturaExterna").innerHTML = data.externalTemp;
-                    document.getElementById("estadoPrototipo").innerHTML = data.status;
-                })
-                .catch(error => console.error('Error fetching data:', error));
-    
-        }
-    
-        // Configurar el intervalo para realizar el fetch cada segundo
-        var fetchInterval = setInterval(fetchData, 1000);
-    
-        // Crear un botón de off para apagar el prototipo
-        var offButton = document.getElementById("off");
-        offButton.addEventListener("click", function() {
-            // Detener el intervalo antes de redirigir
-            clearInterval(fetchInterval);
-    
-            // Apagar el prototipo
-            window.location.href = "index.html";
-        });
-    
-        // Función para redirigir a la página de informe
-        function goToInforme() {
-            // Detener el intervalo antes de redirigir
-            clearInterval(fetchInterval);
-    
-            window.location.href = "informe.html";
-        }
-    </script>
-    
+    <script src="/index.js" onload="setupOnPage()"></script>
     <footer>
         Proyecto desarrollado por: Alejandro Carlos Hernández Mejía, Gabriel Santiago Torres, Francisco Fernández
     </footer>
