@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include <ESPAsyncWebServer.h>
 #include <ArduinoJson.h>
+#include "SPIFFS.h"
 
 #include "handler.h"
 #include "credentials.h"

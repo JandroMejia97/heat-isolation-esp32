@@ -32,15 +32,15 @@ void sendResponse(DynamicJsonDocument doc, AsyncWebServerRequest *request){
 }
 
 //Funcion que recibe los datos del front y debe validar 
-void handleFormRoot(AsyncWebServerRequest *request){
+void handleOnForm(AsyncWebServerRequest *request){
     DynamicJsonDocument reporte(1024);
-    
+
     // Obtengo los datos en formato String
     String desiredTempStr = request->arg("desiredTemperature");
-    String desiredFreqStr = request->arg("desiredFrequency");
+    String samplingFrequencyStr = request->arg("samplingFrequency");
 
     // Conversion a entero de los datos
-    u_int8_t desiredFrequency = desiredFreqStr.toInt();
+    u_int8_t samplingFrequencyInSec = samplingFrequencyStr.toInt();
     u_int8_t desiredTemp = desiredTempStr.toInt();
 
     u_int8_t roomTemp = lroundf(getExternalTemp()), internalTemp = lroundf(getInternalTemp());
@@ -50,10 +50,36 @@ void handleFormRoot(AsyncWebServerRequest *request){
     } else if (internalTemp > desiredTemp) {
         reporte["error"] = "La temperatura ingresada no supera la temperatura interna del recipiente";
     } else {
+        setDevStatus(ON);
+        setDesiredTemp(desiredTemp);
+        setCoolingDownTimeInMS(samplingFrequencyInSec * 1000);
         reporte["success"] = "La temperatura ingresada cumple las condiciones";
     }
 
     sendResponse(reporte, request);
+}
+
+void handleGetResults(AsyncWebServerRequest *request){
+    QueueHandle_t results = getResults();
+
+    if (results == NULL) {
+        DynamicJsonDocument error(512);
+        error["error"] = "No se pudo obtener la cola de resultados";
+        sendResponse(error, request);
+        return;
+    }
+
+    DynamicJsonDocument dataToSend(4096);
+    dataToSend["data"] = JsonArray();
+    do {
+        DataToSend data;
+        xQueueReceive(results, &data, 0);
+        JsonObject obj = dataToSend["data"].createNestedObject();
+        obj["internalTemp"] = data.internalTemp;
+        obj["externalTemp"] = data.externalTemp;
+    } while (uxQueueMessagesWaiting(results) > 0);
+    
+    sendResponse(dataToSend, request);
 }
 
 //Funcion que recibe el formulario para "/on"
@@ -72,33 +98,47 @@ void handleGetStatus(AsyncWebServerRequest *request){
 }
 
 void initServer() {
-    //Ruteo para "/"
+    // Main page
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-        request->send(200, "text/plain", "index.html");
+        setDevStatus(OFF);
+        request->send(SPIFFS, "/index.html");
     });
 
-    //Ruteo para "/" donde se modifican los valores
-    server.on("/", HTTP_POST, handleFormRoot);
+    // Routes for static files
+    server.on("/index.js", HTTP_GET, [](AsyncWebServerRequest *request) {
+        request->send(SPIFFS, "/index.js", "text/javascript");
+    });
 
-    //Ruteo para "/on", aqui se utilizaran los datos leidos iniciales
+    server.on("/styles.css", HTTP_GET,[] (AsyncWebServerRequest *request) {
+        request->send(SPIFFS, "/styles.css", "text/css");
+    });
+
+    // Path to submit form data through an AJAX request
+    server.on("/", HTTP_POST, handleOnForm);
+
+    // On page, to turn on the device
     server.on("/on", HTTP_GET, [](AsyncWebServerRequest *request) {
-        request->send(200, "text/plain", "on.html");
+        request->send(SPIFFS, "/on.html");
     });
 
-    //cuando quiera actualizar los datos se debe solicitar al /on/update
+    // Path to get the device status through an AJAX request
     server.on("/status", HTTP_GET, handleGetStatus);
+
+    // Path to get the results through an AJAX request
+    server.on("/results", HTTP_GET, handleGetResults);
     
-    //Ruteo para "/informe"
-    server.on("/informe", HTTP_GET, [](AsyncWebServerRequest *request) {
-        request->send(200, "text/plain", "informe.html");
+    // Path to get the report page
+    server.on("/report", HTTP_GET, [](AsyncWebServerRequest *request) {
+        setDevStatus(OFF);
+        request->send(SPIFFS, "/informe.html");
     });
     
-    //en caso que no encuentre la pagina
+    // Handle not found
     server.onNotFound([](AsyncWebServerRequest *request) {
         if (request->method() == HTTP_OPTIONS) {
             request->send(200);
         } else {
-            request->send(400, "text/plain", "Not found");
+            request->send(404, "text/plain", "Not found");
         }
     });
 
@@ -130,4 +170,8 @@ void initialize() {
     connectWiFiAP();
     initServer();
     initHandler();
+    if(!SPIFFS.begin(true)){
+        Serial.println("An Error has occurred while mounting SPIFFS");
+        return;
+    }
 }
