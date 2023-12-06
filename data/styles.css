@@ -12,6 +12,7 @@ body {
 .container {
   text-align: center;
   width: 80%;
+  max-height: calc(100vh - 5rem);
 }
 
 h1,
@@ -35,6 +36,8 @@ button {
   border: none;
   cursor: pointer;
   border-radius: 0.25rem;
+  text-decoration: none;
+  text-transform: uppercase;
 }
 
 a.secondary,
@@ -82,9 +85,10 @@ footer {
 }
 
 .table-container {
-  max-height: calc(100vh - 3rem - 20px - 70px);
+  max-height: calc(80vh - 2rem - 2.5rem - 20px - 70px);
   overflow: auto;
 }
+
 table {
   width: 100%;
   border-collapse: collapse;

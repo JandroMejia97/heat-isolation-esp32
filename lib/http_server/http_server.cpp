@@ -14,11 +14,11 @@
 
 IPAddress ip(192, 168, 1, 200);
 IPAddress gateway(192, 168, 1, 1);
-IPAddress subnet(255, 255, 255, 0);;
+IPAddress subnet(255, 255, 255, 0);
 
 AsyncWebServer server(80);
 
-void sendResponse(DynamicJsonDocument doc, AsyncWebServerRequest *request){
+void sendResponse(DynamicJsonDocument doc, AsyncWebServerRequest *request) {
     //crea la respuesta
     String response = "";
     serializeJson(doc, response);
@@ -32,34 +32,38 @@ void sendResponse(DynamicJsonDocument doc, AsyncWebServerRequest *request){
 }
 
 //Funcion que recibe los datos del front y debe validar 
-void handleOnForm(AsyncWebServerRequest *request){
-    DynamicJsonDocument reporte(1024);
+void handleForm(AsyncWebServerRequest *request) {
+    
+}
 
-    // Obtengo los datos en formato String
-    String desiredTempStr = request->arg("desiredTemperature");
-    String samplingFrequencyStr = request->arg("samplingFrequency");
+void handleFormData(AsyncWebServerRequest *request, JsonVariant &json) {
+    JsonObject onDeviceData = json.as<JsonObject>();
+    Serial.printf("Data received: %s\n", json.as<String>().c_str());
+    if (!onDeviceData.containsKey("desiredTemp") || !onDeviceData.containsKey("samplingFrequency")) {
+        DynamicJsonDocument response(1024);
+        response["error"] = "No se recibieron los datos necesarios";
+        sendResponse(response, request);
+    }
 
-    // Conversion a entero de los datos
-    u_int8_t samplingFrequencyInSec = samplingFrequencyStr.toInt();
-    u_int8_t desiredTemp = desiredTempStr.toInt();
-
+    DynamicJsonDocument response(1024);
     u_int8_t roomTemp = lroundf(getExternalTemp()), internalTemp = lroundf(getInternalTemp());
+    u_int8_t samplingFrequencyInSec = onDeviceData["samplingFrequency"].as<u_int8_t>();
+    u_int8_t desiredTemp = onDeviceData["desiredTemp"].as<u_int8_t>();
 
     if (desiredTemp <= roomTemp) {
-        reporte["error"] = "La temperatura ingresada no supera la temperatura ambiente";
+        response["error"] = "La temperatura ingresada no supera la temperatura ambiente";
     } else if (internalTemp > desiredTemp) {
-        reporte["error"] = "La temperatura ingresada no supera la temperatura interna del recipiente";
+        response["error"] = "La temperatura ingresada no supera la temperatura interna del recipiente";
     } else {
         setDevStatus(ON);
         setDesiredTemp(desiredTemp);
         setCoolingDownTimeInMS(samplingFrequencyInSec * 1000);
-        reporte["success"] = "La temperatura ingresada cumple las condiciones";
+        response["success"] = "La temperatura ingresada cumple las condiciones";
     }
-
-    sendResponse(reporte, request);
+    sendResponse(response, request);
 }
 
-void handleGetResults(AsyncWebServerRequest *request){
+void handleGetResults(AsyncWebServerRequest *request) {
     QueueHandle_t results = getResults();
 
     if (results == NULL) {
@@ -75,15 +79,15 @@ void handleGetResults(AsyncWebServerRequest *request){
         DataToSend data;
         xQueueReceive(results, &data, 0);
         JsonObject obj = dataToSend["data"].createNestedObject();
-        obj["internalTemp"] = data.internalTemp;
-        obj["externalTemp"] = data.externalTemp;
+        obj["internalTemp"] = roundf(data.internalTemp);
+        obj["externalTemp"] = roundf(data.externalTemp);
     } while (uxQueueMessagesWaiting(results) > 0);
     
     sendResponse(dataToSend, request);
 }
 
 //Funcion que recibe el formulario para "/on"
-void handleGetStatus(AsyncWebServerRequest *request){
+void handleGetStatus(AsyncWebServerRequest *request) {
     DynamicJsonDocument values(1024);
     String response = "";
 
@@ -110,15 +114,20 @@ void initServer() {
         request->send(SPIFFS, "/index.js", "text/javascript");
     });
 
-    server.on("/styles.css", HTTP_GET,[] (AsyncWebServerRequest *request) {
+    server.on("/styles.css", HTTP_GET, [] (AsyncWebServerRequest *request) {
         request->send(SPIFFS, "/styles.css", "text/css");
     });
 
     // Path to submit form data through an AJAX request
-    server.on("/", HTTP_POST, handleOnForm);
+    AsyncCallbackJsonWebHandler* handler = new AsyncCallbackJsonWebHandler("/", handleFormData);
+    handler->setMethod(HTTP_POST);
+    server.addHandler(handler);
 
     // On page, to turn on the device
     server.on("/on", HTTP_GET, [](AsyncWebServerRequest *request) {
+        if (getDevStatus() == OFF) {
+            setDevStatus(ON);
+        }
         request->send(SPIFFS, "/on.html");
     });
 
@@ -130,8 +139,12 @@ void initServer() {
     
     // Path to get the report page
     server.on("/report", HTTP_GET, [](AsyncWebServerRequest *request) {
-        setDevStatus(OFF);
-        request->send(SPIFFS, "/informe.html");
+        if (getDevStatus() != OFF) {
+            request->send(SPIFFS, "/informe.html");
+            setDevStatus(OFF);
+        } else {
+            request->redirect("/");
+        }
     });
     
     // Handle not found
@@ -151,7 +164,7 @@ void initServer() {
 }
 
 //Inicio del ESP en modo Access Point
-void connectWiFiAP(bool useStaticIP = false) { 
+void connectWiFiAP(bool useStaticIP = false) {
     WiFi.mode(WIFI_AP);
     Serial.println("Conectando");
     while(!WiFi.softAP(AP_SSID, AP_PASSWORD)) {
