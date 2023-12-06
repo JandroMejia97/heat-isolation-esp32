@@ -1,6 +1,6 @@
 # ESP-32s Project with Arduino and PlatformIO
 
-This project consists of an ESP-32s that uses Arduino libraries to receive data (temperature, air/soil humidity, and light intensity) through UART and send it to an MQTT server on Ubidots. PlatformIO is used as the integrated development environment (IDE).
+This project consists of an ESP-32s that uses Arduino libraries to read the temperature and humidity of the environment and the temperature of an object. The ESP-32s has a web server that allows you to control a relay that is connected to a heating element.
 
 ## Before start
 
@@ -12,7 +12,39 @@ Before compiling the project, you must create a file named *credentials.h* in th
 #define AP_HOSTNAME_SECRETS "YOUR_HOSTNAME"
 ```
 
-> ⚠️ Make sure to replace the example values with your own data before compiling.
+> [!WARNING]
+> Make sure to replace the example values with your own data before compiling.
+
+## Compiling and uploading
+
+To compile and upload the project to the ESP-32s, you must have PlatformIO installed. If you don't have it, you can follow the instructions on the [official website](https://platformio.org/install/ide?install=vscode).
+
+Once you have PlatformIO installed, you have build the file system image and upload it to the ESP-32s. To do this, you must follow the third step in the [official documentation](https://docs.platformio.org/en/latest/platforms/espressif32.html#uploading-files-to-file-system).
+
+After that, you can compile and upload the project to the ESP-32s by clicking on the *Upload* button on the PlatformIO toolbar.
+
+> [!NOTE]
+> Before uploading the project, make sure that you have all the libraries installed. You can install them by clicking on the *Libraries* button on the PlatformIO toolbar and searching for the library name. Or you can download them from the [libraries](#libraries) section.
+
+## Hardware
+
+The following hardware is used in this project:
+
+* ESP-32s
+* MLX90614
+* DHT11
+* Relay
+* Resistor 15W 1.2ΩJ
+
+## Compile for Arduino IDE
+
+To compile the project for Arduino IDE, you must run the following command:
+
+```bash
+source ./make-arduino.sh
+```
+
+This command will ask you for the version of the project that you want to assign to the output folder. The output folder will be named *build/heat-[version]*.
 
 ## Libraries
 
