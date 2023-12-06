@@ -57,6 +57,7 @@ void statusHandler(void) {
             }
             Serial.printf("Status: %s\n", getDevStatusString());
             break;
+        case END:
         case OFF:
             if (digitalRead(GPIO_NUM_4) == HIGH) {
                 digitalWrite(GPIO_NUM_4, LOW);
@@ -86,7 +87,7 @@ void statusHandler(void) {
             if (externalError <= MAX_RELATIVE_ERROR) {
                 Serial.println("Cooling down done!");
                 digitalWrite(GPIO_NUM_4, LOW);
-                devStatus = OFF;
+                devStatus = END;
             } else {
                 Serial.println("Cooling down...");
             }
@@ -95,14 +96,14 @@ void statusHandler(void) {
         case ERROR:
             Serial.printf("Error: Internal temperature: %f, Object temperature: %f, External temperature: %f\n", internalTemp, objectTemp, externalTemp);
             break;
-   }
+    }
 }
 
 void loopHandler() {
     delay(10);
     delayCounters++;
 
-    if (devStatus == WARMING_UP && delayCounters % WARMING_UP_TIME_IN_MS == 0) {
+    if ((devStatus == ON || devStatus == WARMING_UP) && delayCounters % WARMING_UP_TIME_IN_MS == 0) {
         statusHandler();
     }
 
@@ -116,11 +117,6 @@ void loopHandler() {
         readDhtSensorsTask();
         timerInterruptCounter++;
         delayCounters = 0;
-    }
-
-    if (timerInterruptCounter % 200 == 0) {
-        readDhtSensorsTask();
-        timerInterruptCounter = 0;
     }
 }
 
@@ -140,6 +136,8 @@ const char *getDevStatusString(void) {
             return "ON";
         case OFF:
             return "OFF";
+        case END:
+            return "END";
         case WARMING_UP:
             return "WARMING_UP";
         case WAITING:
@@ -148,7 +146,9 @@ const char *getDevStatusString(void) {
             return "COOLING_DOWN";
         case ERROR:
             return "ERROR";
-   }
+        default:
+            return "UNKNOWN";
+    }
 }
 
 void readDhtSensorsTask() {
@@ -169,16 +169,16 @@ void readDhtSensorsTask() {
     }
 }
 
-void setCoolingDownTimeInMS(u_int32_t coolingDownTimeInMS) {
-    coolingDownTimeInMS = coolingDownTimeInMS;
+void setCoolingDownTimeInMS(u_int32_t value) {
+    coolingDownTimeInMS = value;
 }
 
 u_int8_t getDesiredTemp() {
     return desiredTemp;
 }
 
-void setDesiredTemp(u_int8_t desiredTemp) {
-    desiredTemp = desiredTemp;
+void setDesiredTemp(u_int8_t value) {
+    desiredTemp = value;
 }
 
 float getInternalTemp() {

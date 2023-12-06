@@ -1,36 +1,50 @@
 var statusData = null;
 let interval = null;
-let previousStatus = null;
+let previousStatus = "OFF";
 const baseUrl = `${location.protocol}//${location.host}`;
 
 // Functions for /
 
 /**
  * Get the status from the API
- * 
+ *
  * @returns {Promise<{internalTemp: number, externalTemp: number, desiredTemperature: number, status: string}>}
  */
 function getStatus() {
-  return fetch(`${baseUrl}/status`)
+  return fetch(`${baseUrl}/status`, {
+    headers: {
+      "Content-Type": "application/json",
+    },
+  })
     .then((response) => response.json())
-    .catch((error) => console.error('Error fetching data:', error));
+    .catch((error) => console.error("Error fetching data:", error));
 }
 
 /**
  * Initialize the device with the desired temperature and the sampling frequency
- * 
- * @param {number} desiredTemperature 
- * @param {number} samplingFrequency 
+ *
+ * @param {number} desiredTemp
+ * @param {number} samplingFrequency
  * @returns {Promise<void>}
  */
-function initializeDevice(desiredTemperature, samplingFrequency) {
+function initializeDevice(desiredTemp, samplingFrequency) {
   return fetch(`${baseUrl}`, {
-    method: 'POST',
+    method: "POST",
     body: JSON.stringify({
       samplingFrequency,
-      desiredTemperature
-    })
-  }).then((response) => response.json())
+      desiredTemp,
+    }),
+    headers: {
+      "Content-Type": "application/json",
+    },
+  }).then((response) => {
+    if (!response.ok) {
+      return response.json().then((data) => {
+        throw { status: response.status, error: data.error };
+      });
+    }
+    return response.json();
+  });
 }
 
 /**
@@ -47,7 +61,7 @@ function setupMainPage() {
 async function setupCurrentStatus() {
   const statusData = await getStatus();
   const { internalTemp } = statusData;
-  const desiredTemperature = document.getElementById('desiredTemperature');
+  const desiredTemperature = document.getElementById("desiredTemp");
   desiredTemperature.min = internalTemp;
 }
 
@@ -55,24 +69,26 @@ async function setupCurrentStatus() {
  * Setup the initial configuration for the prototype form page
  */
 function setupForm() {
-  const prototypeForm = document.getElementById('prototypeForm');
-  
+  const prototypeForm = document.getElementById("prototypeForm");
+
   prototypeForm?.addEventListener("submit", function (event) {
     event.preventDefault();
     // Comparar la temperatura ingresada con la internalTemp
-    const desiredTemperature = +document.getElementById('desiredTemperature').value;
-    const samplingFrequency = +document.getElementById('samplingFrequency').value;
-  
-    initializeDevice(desiredTemperature, samplingFrequency).then(() => {
-      window.location.href = "on";
-    }).catch((error) => {
-      if (error.status === 400 && error.error) {
-        alert(error.error);
-      }
-    })
+    const desiredTemperature = +document.getElementById("desiredTemp").value;
+    const samplingFrequency =
+      +document.getElementById("samplingFrequency").value;
+
+    initializeDevice(desiredTemperature, samplingFrequency)
+      .then(() => {
+        window.location.href = "on";
+      })
+      .catch((error) => {
+        if (error.status === 400 && error.error) {
+          alert(error.error);
+        }
+      });
   });
 }
-
 
 // Functions for /on
 
@@ -80,6 +96,7 @@ function setupForm() {
  * Setup the interval to fetch data from the API
  */
 function setupOnPage() {
+  getStatusData();
   setDataFetchInterval();
 }
 
@@ -96,7 +113,7 @@ function clearDataFetchInterval() {
 function setDataFetchInterval() {
   interval = setInterval(() => {
     getStatusData();
-  }, 3000);
+  }, 5000);
 }
 
 /**
@@ -105,18 +122,18 @@ function setDataFetchInterval() {
 async function getStatusData() {
   const statusData = await getStatus();
   const { internalTemp, externalTemp, desiredTemp, status } = statusData;
-  const internalTempElement = document.getElementById('internalTemp');
-  const externalTempElement = document.getElementById('externalTemp');
-  const desiredTempElement = document.getElementById('desiredTemp');
-  const statusElement = document.getElementById('status');
+  const internalTempElement = document.getElementById("internalTemp");
+  const externalTempElement = document.getElementById("externalTemp");
+  const desiredTempElement = document.getElementById("desiredTemp");
+  const statusElement = document.getElementById("deviceStatus");
 
-  internalTempElement.innerHTML = `${internalTemp ?? '--'} °C`;
-  externalTempElement.innerHTML = `${externalTemp ?? '--'} °C`;
-  desiredTempElement.innerHTML = `${desiredTemp ?? '--'} °C`;
+  internalTempElement.innerHTML = `${internalTemp ?? "--"} °C`;
+  externalTempElement.innerHTML = `${externalTemp ?? "--"} °C`;
+  desiredTempElement.innerHTML = `${desiredTemp ?? "--"} °C`;
   statusElement.innerHTML = status;
-  if (previousStatus !== 'OFF' && status === 'OFF') {
+  if (previousStatus !== "OFF" && status === "END") {
     clearDataFetchInterval();
-    location.href = '/';
+    location.href = "/report";
   }
   previousStatus = status;
 }
@@ -125,13 +142,17 @@ async function getStatusData() {
 
 /**
  * Get the results from the API
- * 
+ *
  * @returns {Promise<Array<{internalTemp: number, externalTemp: number, date: string}>>}
  */
 function getResults() {
-  return fetch(`${baseUrl}/results`)
+  return fetch(`${baseUrl}/results`, {
+    headers: {
+      "Content-Type": "application/json",
+    },
+  })
     .then((response) => response.json())
-    .catch((error) => console.error('Error fetching data:', error));
+    .catch((error) => console.error("Error fetching data:", error));
 }
 
 /**
@@ -144,16 +165,19 @@ async function fillTable() {
     const row = table.insertRow();
     addDataIntoCell(row.insertCell(0), medicion.externalTemp);
     addDataIntoCell(row.insertCell(1), medicion.internalTemp);
-    addDataIntoCell(row.insertCell(3), medicion.externalTemp - medicion.internalTemp);
+    addDataIntoCell(
+      row.insertCell(2),
+      medicion.externalTemp - medicion.internalTemp,
+    );
   });
 }
 
 /**
  * Add data into a cell
- * 
- * @param {HTMLElement} cell 
- * @param {string|number} data 
+ *
+ * @param {HTMLElement} cell
+ * @param {string|number} data
  */
 function addDataIntoCell(cell, data) {
-  cell.innerHTML = `${data || '--'} °C`;
+  cell.innerHTML = `${data || "--"} °C`;
 }

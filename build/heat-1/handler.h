@@ -6,8 +6,8 @@
 #include "dhts.h"
 #include "utils.h"
 
-#define DATA_QUEUE_SIZE 200
-#define MAX_RELATIVE_ERROR 10
+#define DATA_QUEUE_SIZE 1000
+#define MAX_RELATIVE_ERROR 5
 #define MAX_OBJECT_TEMP 70
 #define MIN_OBJECT_TEMP 60
 #define BLOCK_TIME_IN_MS 10
@@ -26,6 +26,7 @@ typedef enum {
   INIT,
   ON,
   OFF,
+  END,
   WARMING_UP,
   WAITING,
   COOLING_DOWN,
