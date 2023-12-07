@@ -193,7 +193,11 @@ async function fillTable() {
  */
 function setupReportPage() {
   fillTable();
-  const endTime = localStorage.getItem("endTime");
+  let endTime = localStorage.getItem("endTime");
+  if (!endTime) {
+    endTime = new Date().toISOString();
+    localStorage.setItem("endTime", endTime);
+  }
   const startTime = localStorage.getItem("startTime");
   const timeDifference = getTimeDifference(startTime, endTime);
   const timeElement = document.getElementById("time");
