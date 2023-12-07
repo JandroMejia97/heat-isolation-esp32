@@ -7,9 +7,9 @@
 #include "utils.h"
 
 #define DATA_QUEUE_SIZE 1000
-#define MAX_RELATIVE_ERROR 5
-#define MAX_OBJECT_TEMP 70
-#define MIN_OBJECT_TEMP 60
+#define MAX_RELATIVE_ERROR 3
+#define MAX_OBJECT_TEMP 60
+#define MIN_OBJECT_TEMP 45
 #define BLOCK_TIME_IN_MS 10
 #define WARMING_UP_TIME_IN_MS 250
 #define WAITING_TIME_IN_MS 500
