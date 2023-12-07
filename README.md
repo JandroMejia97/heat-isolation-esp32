@@ -17,6 +17,8 @@ Before compiling the project, you must create a file named *credentials.h* in th
 
 ## Compiling and uploading
 
+### PlatformIO IDE
+
 To compile and upload the project to the ESP-32s, you must have PlatformIO installed. If you don't have it, you can follow the instructions on the [official website](https://platformio.org/install/ide?install=vscode).
 
 Once you have PlatformIO installed, you have build the file system image and upload it to the ESP-32s. To do this, you must follow the third step in the [official documentation](https://docs.platformio.org/en/latest/platforms/espressif32.html#uploading-files-to-file-system).
@@ -25,6 +27,18 @@ After that, you can compile and upload the project to the ESP-32s by clicking on
 
 > [!NOTE]
 > Before uploading the project, make sure that you have all the libraries installed. You can install them by clicking on the *Libraries* button on the PlatformIO toolbar and searching for the library name. Or you can download them from the [libraries](#libraries) section.
+
+### Arduino IDE
+
+To sync the code from the PlatformIO IDE to the Arduino IDE, you must run the following command:
+
+```bash
+source ./make-arduino.sh
+```
+
+This command will ask you for the version of the project that you want to assign to the output folder. The output folder will be named *build/heat-[version]*.
+
+After that, you can open the Arduino IDE and open the project by clicking on *File > Open...* and selecting the *build/heat-[version]* folder.
 
 ## Hardware
 
@@ -35,16 +49,6 @@ The following hardware is used in this project:
 * DHT11
 * Relay
 * Resistor 15W 1.2ΩJ
-
-## Compile for Arduino IDE
-
-To compile the project for Arduino IDE, you must run the following command:
-
-```bash
-source ./make-arduino.sh
-```
-
-This command will ask you for the version of the project that you want to assign to the output folder. The output folder will be named *build/heat-[version]*.
 
 ## Libraries
 
