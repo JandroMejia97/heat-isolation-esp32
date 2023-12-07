@@ -30,6 +30,7 @@ void initHandler() {
         tasksEnabled = true;
     }
     pinMode(GPIO_NUM_4, OUTPUT);
+    digitalWrite(GPIO_NUM_4, LOW);
     delay(1000);
     devStatus = OFF;
 }
@@ -40,12 +41,12 @@ void statusHandler(void) {
         digitalWrite(GPIO_NUM_4, LOW);
         return;
     }
-    const float internalTemp = getInternalTemp();
+    const InfraredData data = readInfrared();
+    const float internalTemp = data.ambientTemp;
     const float externalTemp = getExternalTemp();
     const float internalError = relError(desiredTemp, internalTemp);
-    const float objectTemp = readInfrared().objectTemp;
 
-    if (isnan(internalTemp) || isnan(objectTemp) || isnan(externalTemp)) {
+    if (isnan(internalTemp) || isnan(data.objectTemp) || isnan(externalTemp)) {
         devStatus = ERROR;
     }
     switch(devStatus) {
@@ -64,9 +65,9 @@ void statusHandler(void) {
             }
             break;
         case WARMING_UP:
-            if (internalError <= MAX_RELATIVE_ERROR || objectTemp >= MAX_OBJECT_TEMP) {
+            Serial.printf("Internal error: %f, Object temperature: %f, Actual temperature: %f\n", internalError, data.objectTemp, data.ambientTemp);
+            if (internalError <= MAX_RELATIVE_ERROR || data.objectTemp >= MAX_OBJECT_TEMP) {
                 Serial.println("Warming up done!");
-                Serial.printf("Internal error: %f, Object temperature: %f\n", internalError, objectTemp);
                 digitalWrite(GPIO_NUM_4, LOW);
                 devStatus = WAITING;
             } else if (digitalRead(GPIO_NUM_4) == LOW) {
@@ -77,7 +78,7 @@ void statusHandler(void) {
         case WAITING:
             if (internalError <= MAX_RELATIVE_ERROR) {
                 devStatus = COOLING_DOWN;
-            } else if (internalError > MAX_RELATIVE_ERROR && objectTemp < MIN_OBJECT_TEMP) {
+            } else if (internalError > MAX_RELATIVE_ERROR && data.objectTemp < MIN_OBJECT_TEMP) {
                 devStatus = WARMING_UP;
             }
             break;
@@ -94,7 +95,7 @@ void statusHandler(void) {
             break;
         }
         case ERROR:
-            Serial.printf("Error: Internal temperature: %f, Object temperature: %f, External temperature: %f\n", internalTemp, objectTemp, externalTemp);
+            Serial.printf("Error: Internal temperature: %.2f, Object temperature: %.2f, External temperature: %.2f\n", internalTemp, data.objectTemp, externalTemp);
             break;
     }
 }
@@ -112,11 +113,18 @@ void loopHandler() {
     }
 
     if (devStatus == COOLING_DOWN && delayCounters % coolingDownTimeInMS == 0) {
+        timerInterruptCounter++;
+        delayCounters = 0;
+    }
+
+    if (timerInterruptCounter % coolingDownTimeInMS == 0) {
+        for (int i = 0; i < 10000; i ++) {
+            delay(1);
+        }
         Serial.println("Status: " + String(getDevStatusString()));
         statusHandler();
         readDhtSensorsTask();
-        timerInterruptCounter++;
-        delayCounters = 0;
+        timerInterruptCounter = 0;
     }
 }
 
@@ -153,14 +161,13 @@ const char *getDevStatusString(void) {
 
 void readDhtSensorsTask() {
     DataToSend dataToSend;
-    DHT* internalDHT = getInternalDHTSensor();
-    const float internalTemp = internalDHT->readTemperature();
-    DHT* roomDHT = getRoomDHTSensor();
-    const float externalTemp = roomDHT->readTemperature();
+    const float internalTemp = readInfrared().ambientTemp;
+    const float externalTemp = getExternalTemp();
+    const float internalError = relError(desiredTemp, internalTemp);
 
     if (isnan(internalTemp) || isnan(externalTemp)) {
         Serial.println("Failed to read from DHT sensor!");
-    } else {
+    } else if (internalError > MAX_RELATIVE_ERROR) {
         dataToSend.internalTemp = internalTemp;
         dataToSend.externalTemp = externalTemp;
         if (xQueueSend(dataQueue, &dataToSend, 0) != pdTRUE) {

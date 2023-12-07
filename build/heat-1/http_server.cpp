@@ -93,7 +93,7 @@ void handleGetStatus(AsyncWebServerRequest *request) {
 
     //llenar un JSON con los datos
     values["externalTemp"] = roundf(getExternalTemp());
-    values["internalTemp"] = roundf(getInternalTemp());
+    values["internalTemp"] = roundf(readInfrared().ambientTemp);
     values["desiredTemp"] = getDesiredTemp();
     values["status"] = getDevStatusString();
     serializeJson(values, response);

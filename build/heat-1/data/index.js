@@ -1,5 +1,6 @@
 var statusData = null;
 let interval = null;
+let started = false;
 let previousStatus = "OFF";
 const baseUrl = `${location.protocol}//${location.host}`;
 
@@ -69,6 +70,7 @@ async function setupCurrentStatus() {
  * Setup the initial configuration for the prototype form page
  */
 function setupForm() {
+  localStorage.clear();
   const prototypeForm = document.getElementById("prototypeForm");
 
   prototypeForm?.addEventListener("submit", function (event) {
@@ -127,13 +129,27 @@ async function getStatusData() {
   const desiredTempElement = document.getElementById("desiredTemp");
   const statusElement = document.getElementById("deviceStatus");
 
-  internalTempElement.innerHTML = `${internalTemp ?? "--"} °C`;
-  externalTempElement.innerHTML = `${externalTemp ?? "--"} °C`;
-  desiredTempElement.innerHTML = `${desiredTemp ?? "--"} °C`;
-  statusElement.innerHTML = status;
-  if (previousStatus !== "OFF" && status === "END") {
-    clearDataFetchInterval();
-    location.href = "/report";
+  if (!internalTempElement.innerHTML.includes(internalTemp)) {
+    addDataIntoCell(internalTempElement, internalTemp);
+  }
+  if (!externalTempElement.innerHTML.includes(externalTemp)) {
+    addDataIntoCell(externalTempElement, externalTemp);
+  }
+  if (!desiredTempElement.innerHTML.includes(desiredTemp)) {
+    desiredTempElement.innerHTML = `${desiredTemp ?? "--"} °C`;
+  }
+  if (previousStatus !== status) {
+    statusElement.innerHTML = status;
+  }
+  if (previousStatus !== "OFF") {
+    if (!started && status === "COOLING_DOWN") {
+      started = true;
+      localStorage.setItem("startTime", new Date().toISOString());
+    } else if (status === "END") {
+      clearDataFetchInterval();
+      localStorage.setItem("endTime", new Date().toISOString());
+      location.href = "/report";
+    }
   }
   previousStatus = status;
 }
@@ -170,6 +186,33 @@ async function fillTable() {
       medicion.externalTemp - medicion.internalTemp,
     );
   });
+}
+
+/**
+ * Setup the initial configuration for the report page
+ */
+function setupReportPage() {
+  fillTable();
+  const endTime = localStorage.getItem("endTime");
+  const startTime = localStorage.getItem("startTime");
+  const timeDifference = getTimeDifference(startTime, endTime);
+  const timeElement = document.getElementById("time");
+  timeElement.innerHTML = `${timeDifference} minutes`;
+}
+
+/**
+ * Get the time difference between two dates
+ *
+ * @param {string} startTime 
+ * @param {string} endTime 
+ * @returns {number}
+ */
+function getTimeDifference(startTime, endTime) {
+  const start = new Date(startTime);
+  const end = new Date(endTime);
+  const difference = end.getTime() - start.getTime();
+  const minutes = Math.floor(difference / 1000 / 60);
+  return minutes;
 }
 
 /**
