@@ -170,7 +170,7 @@ void readDhtSensorsTask() {
     } else if (internalError > MAX_RELATIVE_ERROR) {
         dataToSend.internalTemp = internalTemp;
         dataToSend.externalTemp = externalTemp;
-        if (xQueueSend(dataQueue, &dataToSend, 0) != pdTRUE) {
+        if (xQueueSendToBack(dataQueue, &dataToSend, 0) != pdTRUE) {
             Serial.println("Failed to send data to queue");
         }
     }

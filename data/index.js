@@ -183,7 +183,7 @@ async function fillTable() {
     addDataIntoCell(row.insertCell(1), medicion.internalTemp);
     addDataIntoCell(
       row.insertCell(2),
-      medicion.externalTemp - medicion.internalTemp,
+      Math.abs(medicion.externalTemp - medicion.internalTemp),
     );
   });
 }
