@@ -9,7 +9,7 @@ const baseUrl = `${location.protocol}//${location.host}`;
 /**
  * Get the status from the API
  *
- * @returns {Promise<{internalTemp: number, externalTemp: number, desiredTemperature: number, status: string}>}
+ * @returns {Promise<{internalTemp: number, externalTemp: number, desiredTemp: number, status: string}>}
  */
 function getStatus() {
   return fetch(`${baseUrl}/status`, {

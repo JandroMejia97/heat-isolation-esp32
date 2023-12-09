@@ -9,7 +9,7 @@ const baseUrl = `${location.protocol}//${location.host}`;
 /**
  * Get the status from the API
  *
- * @returns {Promise<{internalTemp: number, externalTemp: number, desiredTemperature: number, status: string}>}
+ * @returns {Promise<{internalTemp: number, externalTemp: number, desiredTemp: number, status: string}>}
  */
 function getStatus() {
   return fetch(`${baseUrl}/status`, {
@@ -183,7 +183,7 @@ async function fillTable() {
     addDataIntoCell(row.insertCell(1), medicion.internalTemp);
     addDataIntoCell(
       row.insertCell(2),
-      medicion.externalTemp - medicion.internalTemp,
+      Math.abs(medicion.externalTemp - medicion.internalTemp),
     );
   });
 }
